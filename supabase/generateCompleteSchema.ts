@@ -68,6 +68,8 @@ DROP POLICY IF EXISTS "Users can delete their own progress" ON public.user_progr
 CREATE POLICY "Users can delete their own progress" ON public.user_progress FOR DELETE USING (auth.uid() = user_id);
 
 -- 4. Full Curriculum Node Inserts
+TRUNCATE TABLE public.nodes CASCADE;
+
 `;
 
 const nodeInserts = seedNodes.map(n => {
@@ -77,7 +79,7 @@ const nodeInserts = seedNodes.map(n => {
   return `  ('${n.id}', '${n.slug}', '${labelEscaped}', '${catEscaped}', '${n.difficulty}', '${urlEscaped}')`;
 }).join(',\n');
 
-const sqlNodes = `INSERT INTO public.nodes (id, slug, label, category, difficulty, url) VALUES\n${nodeInserts}\nON CONFLICT (slug) DO UPDATE SET\n  label = EXCLUDED.label,\n  category = EXCLUDED.category,\n  difficulty = EXCLUDED.difficulty,\n  url = EXCLUDED.url;\n\n`;
+const sqlNodes = `INSERT INTO public.nodes (id, slug, label, category, difficulty, url) VALUES\n${nodeInserts}\nON CONFLICT (slug) DO UPDATE SET\n  id = EXCLUDED.id,\n  label = EXCLUDED.label,\n  category = EXCLUDED.category,\n  difficulty = EXCLUDED.difficulty,\n  url = EXCLUDED.url;\n\n`;
 
 const edgeInserts = seedEdges.map(e => {
   const edgeId = e.id || 'gen_random_uuid()';

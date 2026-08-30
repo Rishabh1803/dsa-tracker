@@ -64,6 +64,8 @@ DROP POLICY IF EXISTS "Users can delete their own progress" ON public.user_progr
 CREATE POLICY "Users can delete their own progress" ON public.user_progress FOR DELETE USING (auth.uid() = user_id);
 
 -- 4. Full Curriculum Node Inserts
+TRUNCATE TABLE public.nodes CASCADE;
+
 INSERT INTO public.nodes (id, slug, label, category, difficulty, url) VALUES
   ('4089aec3-000b-4000-8000-4089aec30000', 'running-sum', 'Running Sum of 1d Array', 'Arrays', 'Easy', 'https://leetcode.com/problems/running-sum-of-1d-array/'),
   ('76ead4f9-000b-4000-8000-76ead4f90000', 'even-digits', 'Numbers with Even Digits', 'Arrays', 'Easy', 'https://leetcode.com/problems/find-numbers-with-even-number-of-digits/'),
@@ -271,6 +273,7 @@ INSERT INTO public.nodes (id, slug, label, category, difficulty, url) VALUES
   ('6b630aec-0011-4000-8000-6b630aec0000', 'range-sum-mutable', 'Range Sum Query - Mutable', 'Segment Trees', 'Medium', 'https://leetcode.com/problems/range-sum-query-mutable/'),
   ('58b23f03-000f-4000-8000-58b23f030000', 'range-min-query', 'Range Minimum Query', 'Segment Trees', 'Medium', 'https://www.geeksforgeeks.org/problems/range-minimum-query/1')
 ON CONFLICT (slug) DO UPDATE SET
+  id = EXCLUDED.id,
   label = EXCLUDED.label,
   category = EXCLUDED.category,
   difficulty = EXCLUDED.difficulty,
