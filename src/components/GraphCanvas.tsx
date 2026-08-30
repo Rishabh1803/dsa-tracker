@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DSANode, DSAEdge, UserProgressMap, NodeStatus } from '@/lib/types';
 import { calculateNodeStatuses } from '@/lib/topoSort';
-import { ZoomIn, ZoomOut, Maximize2, Activity, GitFork, Layers, Network } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Activity, Grid, Network, ArrowRight } from 'lucide-react';
 
 interface GraphCanvasProps {
   nodes: DSANode[];
@@ -16,7 +16,7 @@ interface GraphCanvasProps {
   searchQuery?: string;
 }
 
-export type LayoutMode = 'spacious' | 'hierarchical-ud' | 'hierarchical-lr';
+export type LayoutMode = 'cluster' | 'module-grid' | 'dependency-flow';
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   nodes,
@@ -31,13 +31,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<any>(null);
   const [physicsEnabled, setPhysicsEnabled] = useState(true);
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('spacious');
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('cluster');
 
   // Calculate Phase 3 statuses (Locked, Ready, Completed)
   const statusMap = calculateNodeStatuses(nodes, edges, userProgress);
 
-  // Filter nodes
-  const filteredNodes = nodes.filter(node => {
+  // Filter nodes & include connecting edge endpoints so connections are never cut off
+  const primaryFilteredNodes = nodes.filter(node => {
     if (filterCategory !== 'All' && node.category !== filterCategory) return false;
     if (filterDifficulty !== 'All' && node.difficulty !== filterDifficulty) return false;
     if (searchQuery.trim() !== '') {
@@ -51,10 +51,43 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return true;
   });
 
-  const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
-  const filteredEdges = edges.filter(
-    e => filteredNodeIds.has(e.from) && filteredNodeIds.has(e.to)
-  );
+  const primaryNodeIds = new Set(primaryFilteredNodes.map(n => n.id));
+  const connectedEdgeNodeIds = new Set<string>();
+
+  // Include edges that connect to/from primary filtered nodes
+  const filteredEdges = edges.filter(e => {
+    if (primaryNodeIds.has(e.from) || primaryNodeIds.has(e.to)) {
+      connectedEdgeNodeIds.add(e.from);
+      connectedEdgeNodeIds.add(e.to);
+      return true;
+    }
+    return false;
+  });
+
+  // Final nodes set includes primary + connected context nodes
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const finalNodesList = Array.from(connectedEdgeNodeIds)
+    .map(id => nodeMap.get(id))
+    .filter((n): n is DSANode => Boolean(n));
+
+  // Compute Module Grid layout positions if module-grid layout is active
+  const categoryList = Array.from(new Set(finalNodesList.map(n => n.category))).sort();
+  const categoryPositions = new Map<string, { x: number; y: number }>();
+  categoryList.forEach((cat, index) => {
+    const cols = 4;
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    categoryPositions.set(cat, { x: col * 650 - 900, y: row * 500 - 600 });
+  });
+
+  // Compute Dependency Depth for dependency-flow layout
+  const inDegreeMap = new Map<string, number>();
+  finalNodesList.forEach(n => inDegreeMap.set(n.id, 0));
+  filteredEdges.forEach(e => {
+    if (inDegreeMap.has(e.to)) {
+      inDegreeMap.set(e.to, (inDegreeMap.get(e.to) || 0) + 1);
+    }
+  });
 
   useEffect(() => {
     let networkInstance: any = null;
@@ -64,60 +97,81 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
       const visNetwork = await import('vis-network/standalone');
 
-      const visNodes = filteredNodes.map(node => {
+      // Track items per category for grid offset
+      const categoryCounters = new Map<string, number>();
+
+      const visNodes = finalNodesList.map(node => {
         const info = statusMap.get(node.id);
         const status: NodeStatus = info ? info.status : 'locked';
         const isSelected = selectedNodeId === node.id || selectedNodeId === node.slug;
+        const isPrimaryMatch = primaryNodeIds.has(node.id);
 
-        let bgColor = '#1e293b'; // Slate 800 for Locked
-        let borderColor = '#475569';
-        let fontColor = '#e2e8f0';
+        let bgColor = isPrimaryMatch ? '#1e293b' : '#0f172a'; // Dim non-primary connected nodes
+        let borderColor = isPrimaryMatch ? '#475569' : '#334155';
+        let fontColor = isPrimaryMatch ? '#f8fafc' : '#94a3b8';
         let iconPrefix = '🔒 ';
 
         if (status === 'completed') {
-          bgColor = '#047857'; // Deep Emerald
+          bgColor = isPrimaryMatch ? '#047857' : '#064e3b';
           borderColor = '#10b981';
           fontColor = '#ffffff';
           iconPrefix = '✓ ';
         } else if (status === 'ready') {
-          bgColor = '#b45309'; // Deep Amber
+          bgColor = isPrimaryMatch ? '#b45309' : '#78350f';
           borderColor = '#f59e0b';
           fontColor = '#ffffff';
           iconPrefix = '⚡ ';
         }
 
-        return {
+        const baseNode: any = {
           id: node.id,
           label: `${iconPrefix}${node.label}\n[${node.difficulty}]`,
           shape: 'box',
           margin: { top: 10, right: 12, bottom: 10, left: 12 },
-          borderWidth: isSelected ? 3 : 1.5,
+          borderWidth: isSelected ? 3.5 : 1.5,
           color: {
             background: bgColor,
-            border: isSelected ? '#ffffff' : borderColor,
+            border: isSelected ? '#38bdf8' : borderColor,
             highlight: {
               background: bgColor,
-              border: '#ffffff',
+              border: '#38bdf8',
             },
             hover: {
               background: bgColor,
-              border: '#ffffff',
+              border: '#38bdf8',
             },
           },
           font: {
             color: fontColor,
-            size: 12,
+            size: isSelected ? 13 : 12,
             face: 'Inter, system-ui, sans-serif',
           },
           shadow: isSelected
-            ? { enabled: true, color: 'rgba(255,255,255,0.4)', size: 12, x: 0, y: 0 }
-            : { enabled: true, color: 'rgba(0,0,0,0.4)', size: 6, x: 0, y: 3 },
+            ? { enabled: true, color: '#38bdf8', size: 15, x: 0, y: 0 }
+            : { enabled: true, color: 'rgba(0,0,0,0.5)', size: 5, x: 0, y: 3 },
           shapeProperties: {
             borderRadius: 8,
           },
         };
+
+        // Apply custom coordinates for structured layout modes
+        if (layoutMode === 'module-grid') {
+          const catPos = categoryPositions.get(node.category) || { x: 0, y: 0 };
+          const count = categoryCounters.get(node.category) || 0;
+          categoryCounters.set(node.category, count + 1);
+
+          const innerCols = 3;
+          const innerCol = count % innerCols;
+          const innerRow = Math.floor(count / innerCols);
+
+          baseNode.x = catPos.x + innerCol * 180;
+          baseNode.y = catPos.y + innerRow * 80;
+        }
+
+        return baseNode;
       });
 
+      // Bright, Vibrant, High-Visibility Edges
       const visEdges = filteredEdges.map(edge => ({
         id: edge.id || `${edge.from}->${edge.to}`,
         from: edge.from,
@@ -125,21 +179,22 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         arrows: {
           to: {
             enabled: true,
-            scaleFactor: 0.8,
+            scaleFactor: 1.2, // Prominent directional arrows
             type: 'arrow',
           },
         },
         color: {
-          color: '#475569',
-          highlight: '#38bdf8',
-          hover: '#94a3b8',
+          color: '#38bdf8',       // High-contrast Sky Blue
+          highlight: '#34d399', // Glowing Emerald on select
+          hover: '#60a5fa',
+          opacity: 0.85,
         },
-        width: 1.5,
+        width: 2.5, // Thicker, clearly visible lines
         smooth: {
           enabled: true,
           type: 'cubicBezier',
-          forceDirection: layoutMode === 'hierarchical-ud' ? 'vertical' : layoutMode === 'hierarchical-lr' ? 'horizontal' : 'none',
-          roundness: 0.4,
+          forceDirection: 'none',
+          roundness: 0.35,
         },
       }));
 
@@ -147,10 +202,6 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         nodes: new visNetwork.DataSet(visNodes as any),
         edges: new visNetwork.DataSet(visEdges as any),
       };
-
-      // Layout options based on selected mode
-      const isHierarchical = layoutMode.startsWith('hierarchical');
-      const direction = layoutMode === 'hierarchical-lr' ? 'LR' : 'UD';
 
       const options = {
         nodes: {
@@ -161,37 +212,25 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         },
         interaction: {
           hover: true,
-          tooltipDelay: 150,
+          tooltipDelay: 100,
           zoomView: true,
           dragView: true,
         },
         physics: {
-          enabled: !isHierarchical && physicsEnabled,
-          solver: 'barnesHut',
-          barnesHut: {
-            gravitationalConstant: -4000, // Generous repulsion to prevent clutter
-            centralGravity: 0.1,
-            springLength: 180,            // Long spring length for spacious node gap
-            springConstant: 0.04,
-            damping: 0.4,
-            avoidOverlap: 1.0,           // Strict overlap avoidance
+          enabled: layoutMode !== 'module-grid' && physicsEnabled,
+          solver: 'forceAtlas2Based',
+          forceAtlas2Based: {
+            gravitationalConstant: -140, // Balanced cluster repulsion
+            centralGravity: 0.005,
+            springLength: 160,          // Clean spacing between connected topics
+            springConstant: 0.05,
+            damping: 0.5,
+            avoidOverlap: 1.0,          // Guaranteed zero node overlapping
           },
           stabilization: {
             enabled: true,
-            iterations: 200,
+            iterations: 250,
             updateInterval: 25,
-          },
-        },
-        layout: {
-          hierarchical: {
-            enabled: isHierarchical,
-            direction: direction,
-            sortMethod: 'directed',
-            nodeSpacing: 180,
-            levelSeparation: 160,
-            blockShifting: true,
-            edgeMinimization: true,
-            parentCentralization: true,
           },
         },
       };
@@ -206,9 +245,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }
       });
 
-      // Auto fit on stabilization
+      // Auto fit canvas on initial stabilization
       networkInstance.once('stabilizationIterationsDone', () => {
-        networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+        networkInstance.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
       });
     }
 
@@ -219,7 +258,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         networkInstance.destroy();
       }
     };
-  }, [nodes, edges, userProgress, filterCategory, filterDifficulty, searchQuery, selectedNodeId, layoutMode]);
+  }, [finalNodesList, filteredEdges, userProgress, filterCategory, filterDifficulty, searchQuery, selectedNodeId, layoutMode]);
 
   const handleZoomIn = () => {
     if (networkRef.current) {
@@ -260,45 +299,32 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       {/* Floating Layout & View Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
         
-        {/* Layout Mode Selector Dropdown */}
+        {/* Layout Mode Selector Buttons */}
         <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/90 p-1 shadow-lg backdrop-blur-md">
           <button
-            onClick={() => setLayoutMode('spacious')}
-            title="Spacious Network Cluster"
+            onClick={() => setLayoutMode('cluster')}
+            title="Interactive Curriculum Cluster"
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
-              layoutMode === 'spacious'
+              layoutMode === 'cluster'
                 ? 'bg-emerald-500 text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Network className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Spacious</span>
+            <span className="hidden sm:inline">Cluster Layout</span>
           </button>
 
           <button
-            onClick={() => setLayoutMode('hierarchical-ud')}
-            title="Top-Down Dependency Tree"
+            onClick={() => setLayoutMode('module-grid')}
+            title="Organized Module Grid"
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
-              layoutMode === 'hierarchical-ud'
+              layoutMode === 'module-grid'
                 ? 'bg-emerald-500 text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <GitFork className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Top-Down Tree</span>
-          </button>
-
-          <button
-            onClick={() => setLayoutMode('hierarchical-lr')}
-            title="Left-Right Dependency Flow"
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
-              layoutMode === 'hierarchical-lr'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Left-Right</span>
+            <Grid className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Module Grid</span>
           </button>
         </div>
 
@@ -328,10 +354,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             <Maximize2 className="h-4 w-4" />
           </button>
 
-          {!layoutMode.startsWith('hierarchical') && (
+          {layoutMode === 'cluster' && (
             <button
               onClick={togglePhysics}
-              title={physicsEnabled ? "Freeze Node Positions" : "Enable Physics"}
+              title={physicsEnabled ? "Freeze Layout Positions" : "Enable Physics"}
               className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
                 physicsEnabled
                   ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
@@ -359,8 +385,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           <span className="h-3 w-3 rounded-md bg-slate-600 shadow-sm" />
           <span>Locked 🔒</span>
         </div>
-        <div className="hidden border-l border-slate-800 pl-3 text-slate-500 sm:block">
-          Use Category filter or Layout Mode buttons to declutter view
+        <div className="flex items-center gap-1.5 text-sky-400 border-l border-slate-800 pl-3">
+          <ArrowRight className="h-4 w-4" />
+          <span>Prerequisite Arrow</span>
         </div>
       </div>
 
