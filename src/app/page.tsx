@@ -73,12 +73,15 @@ export default function Home() {
             setUser(u);
             const p = await fetchUserProgress(u.id);
             setUserProgress(p);
+          } else if (_event === 'SIGNED_OUT') {
+            setUser(null);
+            setUserProgress({});
           }
         });
       }
 
-      // 2. Fallback: Check local user session
-      if (!activeUserKey && typeof window !== 'undefined') {
+      // 2. Fallback: Check local user session only if Supabase is NOT configured
+      if (!isSupabaseConfigured && !activeUserKey && typeof window !== 'undefined') {
         const savedUserRaw = localStorage.getItem('dsa_tracker_current_user');
         if (savedUserRaw) {
           try {
@@ -102,8 +105,8 @@ export default function Home() {
       setUserProgress(p);
       setLoading(false);
 
-      // Auto-sync LeetCode in background on initial load if account is linked
-      if (savedHandle) {
+      // Auto-sync LeetCode in background on initial load if user is logged in
+      if (savedHandle && activeUserKey) {
         handleQuickLeetCodeSync(savedHandle, activeUserKey);
       }
     }
@@ -132,6 +135,12 @@ export default function Home() {
 
   // Quick 1-Click LeetCode Sync handler
   const handleQuickLeetCodeSync = async (handleToSync?: string, overrideUserKey?: string) => {
+    const userKey = overrideUserKey || user?.id || user?.email;
+    if (!userKey) {
+      setShowAuthModal(true);
+      return;
+    }
+
     const handle = handleToSync || leetcodeHandle;
     if (!handle) {
       setShowLeetCodeModal(true);
@@ -139,7 +148,6 @@ export default function Home() {
     }
 
     setIsSyncingLeetCode(true);
-    const userKey = overrideUserKey || user?.id || user?.email;
 
     try {
       const res = await fetch('/api/sync-leetcode', {
@@ -165,7 +173,7 @@ export default function Home() {
     }
   };
 
-  // Auth Handler: Supports both Supabase Auth & Local Demo Auth
+  // Auth Handler: Strictly Enforces Supabase Auth Rules
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
@@ -175,22 +183,34 @@ export default function Home() {
       return;
     }
 
+    // 1. Supabase Auth Mode (Enforces Real Authentication)
     if (isSupabaseConfigured && supabase) {
       try {
         if (authMode === 'signup') {
           const { data, error } = await supabase.auth.signUp({ email, password });
-          if (error) throw error;
+          if (error) {
+            setAuthError(error.message);
+            return;
+          }
           if (data.user) {
-            const u = { id: data.user.id, email: data.user.email };
-            setUser(u);
-            const p = await fetchUserProgress(u.id);
-            setUserProgress(p);
-            setShowAuthModal(false);
+            // Check if email confirmation is required
+            if (data.session) {
+              const u = { id: data.user.id, email: data.user.email };
+              setUser(u);
+              const p = await fetchUserProgress(u.id);
+              setUserProgress(p);
+              setShowAuthModal(false);
+            } else {
+              setAuthError('Account created! Please check your email to confirm your account before logging in.');
+            }
             return;
           }
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) throw error;
+          if (error) {
+            setAuthError(error.message);
+            return;
+          }
           if (data.user) {
             const u = { id: data.user.id, email: data.user.email };
             setUser(u);
@@ -201,10 +221,13 @@ export default function Home() {
           }
         }
       } catch (err: any) {
-        console.warn('Supabase Auth warning:', err.message);
+        setAuthError(err.message || 'Authentication error.');
+        return;
       }
+      return;
     }
 
+    // 2. Offline / Local Demo Auth (Only used if Supabase environment variables are missing)
     const localUser = { id: email.toLowerCase().trim(), email: email.toLowerCase().trim() };
     setUser(localUser);
     if (typeof window !== 'undefined') {
@@ -246,7 +269,10 @@ export default function Home() {
         userEmail={user?.email}
         leetcodeHandle={leetcodeHandle}
         isSyncingLeetCode={isSyncingLeetCode}
-        onOpenAuth={() => setShowAuthModal(true)}
+        onOpenAuth={() => {
+          setAuthError('');
+          setShowAuthModal(true);
+        }}
         onOpenLeetCodeSync={() => setShowLeetCodeModal(true)}
         onQuickLeetCodeSync={() => handleQuickLeetCodeSync()}
         onSignOut={handleSignOut}
@@ -367,8 +393,8 @@ export default function Home() {
                 </h3>
                 <p className="text-[11px] text-slate-400">
                   {isSupabaseConfigured
-                    ? 'Connect with Supabase Auth'
-                    : 'Sign in to switch user progress'}
+                    ? 'Protected with Supabase Authentication'
+                    : 'Offline Mode (Local Storage)'}
                 </p>
               </div>
               <button
@@ -430,7 +456,10 @@ export default function Home() {
                 <span>
                   Don't have an account?{' '}
                   <button
-                    onClick={() => setAuthMode('signup')}
+                    onClick={() => {
+                      setAuthError('');
+                      setAuthMode('signup');
+                    }}
                     className="font-bold text-emerald-400 hover:underline"
                   >
                     Sign Up
@@ -440,7 +469,10 @@ export default function Home() {
                 <span>
                   Already registered?{' '}
                   <button
-                    onClick={() => setAuthMode('login')}
+                    onClick={() => {
+                      setAuthError('');
+                      setAuthMode('login');
+                    }}
                     className="font-bold text-emerald-400 hover:underline"
                   >
                     Log In
