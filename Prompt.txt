@@ -1,0 +1,401 @@
+You are absolutely right—I used a shorthand reference in the document to save space, but for a true "Super Prompt" to work in a fresh chat, it must contain the **entire unified dataset** (Weeks 1–26) explicitly.
+
+Here is the **100% complete, unified Super Prompt**. You can click the "Copy" icon in the top right of the code block below and paste it directly into your new chat.
+
+```markdown
+You are an expert Full-Stack Architect. Build a complete, production-ready, multi-user interactive web application. The application is an **Interactive DSA Learning Dependency Graph & Topological Study Planner**.
+
+Since this needs to be hosted and support multiple distinct users, we are building a modern web app.
+
+### Tech Stack:
+*   **Frontend:** Next.js (App Router), React, Tailwind CSS, Lucide Icons.
+*   **Graph Engine:** Vis.js Network (via `react-graph-vis` or vanilla JS wrapped in a React component).
+*   **Backend / BaaS:** Supabase (PostgreSQL + Auth).
+*   **Hosting:** Vercel.
+
+---
+
+### 1. Key Functional Requirements
+
+1.  **Authentication & Multi-User State:**
+    *   Sign Up / Log In screen.
+    *   Each user has their own isolated progress tracker. 
+    *   The core graph (Nodes and Edges) is a shared global curriculum, but the `status` (Completed, Ready, Locked) is calculated dynamically per user based on a `user_progress` table.
+
+2.  **Interactive Directional Graph Canvas:**
+    *   Render nodes with directional arrows (`Prerequisite -> Target`).
+    *   Color-code dynamically based on user's database state:
+        *   **Locked 🔒 (Gray):** Prerequisites unmet.
+        *   **Ready 🟡 (Amber):** Prerequisites met, pending completion.
+        *   **Completed 🟢 (Emerald):** Marked completed in DB.
+    *   Node Inspector Drawer: Click a node to view its Module, Difficulty, Link, Prerequisites status, and a button to toggle completion in the database.
+
+3.  **Topological Study Path Generator:**
+    *   Button to run Kahn's Algorithm on the client side.
+    *   Filters out `Completed` nodes and outputs a linear ordered queue of `Ready` and `Locked` nodes so the user knows exactly what to study next.
+
+4.  **Admin / Bulk Importer (CSV/Excel):**
+    *   A utility page where an Admin can paste CSV rows (`Week, Type, Topic, Name, Difficulty, Link, Status, Notes`).
+    *   The app parses this and upserts the global `nodes` table.
+
+---
+
+### 2. Database Schema (Supabase / SQL)
+Provide the SQL to create the following relational structure:
+*   `nodes`: id (UUID), slug (String, Unique), label, category, difficulty, url.
+*   `edges`: id, from_node (FK to nodes.slug), to_node (FK to nodes.slug).
+*   `user_progress`: id, user_id (FK to Auth), node_slug (FK to nodes.slug), completed_at (Timestamp).
+
+---
+
+### 3. Complete Seed Dataset (Weeks 1–26 Curriculum)
+
+Implement a seed script or JSON file to populate the database with these EXACT nodes and edges.
+
+#### **Nodes Dataset:**
+```javascript
+const seedNodes = [
+  // --- MODULE 1: ARRAYS & PREFIX SUMS ---
+  { id: "running-sum", label: "Running Sum of 1d Array", category: "Arrays", difficulty: "Easy", url: "[https://leetcode.com/problems/running-sum-of-1d-array/](https://leetcode.com/problems/running-sum-of-1d-array/)" },
+  { id: "even-digits", label: "Numbers with Even Digits", category: "Arrays", difficulty: "Easy", url: "[https://leetcode.com/problems/find-numbers-with-even-number-of-digits/](https://leetcode.com/problems/find-numbers-with-even-number-of-digits/)" },
+  { id: "max-words", label: "Max Words in Sentences", category: "Arrays", difficulty: "Easy", url: "[https://leetcode.com/problems/maximum-number-of-words-found-in-sentences/](https://leetcode.com/problems/maximum-number-of-words-found-in-sentences/)" },
+  { id: "stock-1", label: "Best Time to Buy and Sell Stock", category: "Arrays", difficulty: "Easy", url: "[https://leetcode.com/problems/best-time-to-buy-and-sell-stock/](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/)" },
+  { id: "two-sum", label: "Two Sum", category: "Arrays", difficulty: "Easy", url: "[https://leetcode.com/problems/two-sum/](https://leetcode.com/problems/two-sum/)" },
+  { id: "max-subarray", label: "Maximum Subarray (Kadane)", category: "Arrays", difficulty: "Medium", url: "[https://leetcode.com/problems/maximum-subarray/](https://leetcode.com/problems/maximum-subarray/)" },
+  { id: "product-except-self", label: "Product of Array Except Self", category: "Arrays", difficulty: "Medium", url: "[https://leetcode.com/problems/product-of-array-except-self/](https://leetcode.com/problems/product-of-array-except-self/)" },
+  { id: "subarray-sum-k", label: "Subarray Sum Equals K", category: "Arrays", difficulty: "Medium", url: "[https://leetcode.com/problems/subarray-sum-equals-k/](https://leetcode.com/problems/subarray-sum-equals-k/)" },
+  { id: "contiguous-array", label: "Contiguous Array", category: "Arrays", difficulty: "Medium", url: "[https://leetcode.com/problems/contiguous-array/](https://leetcode.com/problems/contiguous-array/)" },
+  { id: "subarray-div-k", label: "Subarray Sums Divisible by K", category: "Arrays", difficulty: "Medium", url: "[https://leetcode.com/problems/subarray-sums-divisible-by-k/](https://leetcode.com/problems/subarray-sums-divisible-by-k/)" },
+
+  // --- MODULE 2: HASH MAPS & SETS ---
+  { id: "contains-duplicate", label: "Contains Duplicate", category: "Hash Maps & Sets", difficulty: "Easy", url: "[https://leetcode.com/problems/contains-duplicate/](https://leetcode.com/problems/contains-duplicate/)" },
+  { id: "majority-element", label: "Majority Element", category: "Hash Maps & Sets", difficulty: "Easy", url: "[https://leetcode.com/problems/majority-element/](https://leetcode.com/problems/majority-element/)" },
+  { id: "valid-anagram", label: "Valid Anagram", category: "Hash Maps & Sets", difficulty: "Easy", url: "[https://leetcode.com/problems/valid-anagram/](https://leetcode.com/problems/valid-anagram/)" },
+  { id: "longest-consec-seq", label: "Longest Consecutive Sequence", category: "Hash Maps & Sets", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-consecutive-sequence/](https://leetcode.com/problems/longest-consecutive-sequence/)" },
+
+  // --- MODULE 3: TWO POINTERS & SLIDING WINDOW ---
+  { id: "valid-palindrome", label: "Valid Palindrome", category: "Sliding Window", difficulty: "Easy", url: "[https://leetcode.com/problems/valid-palindrome/](https://leetcode.com/problems/valid-palindrome/)" },
+  { id: "container-water", label: "Container With Most Water", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/container-with-most-water/](https://leetcode.com/problems/container-with-most-water/)" },
+  { id: "3sum", label: "3Sum", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/3sum/](https://leetcode.com/problems/3sum/)" },
+  { id: "longest-substr-no-repeat", label: "Longest Substring Without Repeating Chars", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-substring-without-repeating-characters/](https://leetcode.com/problems/longest-substring-without-repeating-characters/)" },
+  { id: "find-all-anagrams", label: "Find All Anagrams in a String", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/find-all-anagrams-in-a-string/](https://leetcode.com/problems/find-all-anagrams-in-a-string/)" },
+  { id: "longest-palindromic-substr", label: "Longest Palindromic Substring", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-palindromic-substring/](https://leetcode.com/problems/longest-palindromic-substring/)" },
+  { id: "min-window-substr", label: "Minimum Window Substring", category: "Sliding Window", difficulty: "Hard", url: "[https://leetcode.com/problems/minimum-window-substring/](https://leetcode.com/problems/minimum-window-substring/)" },
+  { id: "max-avg-subarray", label: "Maximum Average Subarray I", category: "Sliding Window", difficulty: "Easy", url: "[https://leetcode.com/problems/maximum-average-subarray-i/](https://leetcode.com/problems/maximum-average-subarray-i/)" },
+  { id: "contains-duplicate-ii", label: "Contains Duplicate II", category: "Sliding Window", difficulty: "Easy", url: "[https://leetcode.com/problems/contains-duplicate-ii/](https://leetcode.com/problems/contains-duplicate-ii/)" },
+  { id: "subarray-avg-threshold", label: "Sub-arrays Size K Avg >= Threshold", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/](https://leetcode.com/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/)" },
+  { id: "longest-repeat-char-replace", label: "Longest Repeating Character Replacement", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-repeating-character-replacement/](https://leetcode.com/problems/longest-repeating-character-replacement/)" },
+  { id: "permutation-in-string", label: "Permutation in String", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/permutation-in-string/](https://leetcode.com/problems/permutation-in-string/)" },
+  { id: "longest-subarray-del-one", label: "Longest Subarray 1s Deleting One", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element/](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element/)" },
+  { id: "max-consecutive-ones-iii", label: "Max Consecutive Ones III", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/max-consecutive-ones-iii/](https://leetcode.com/problems/max-consecutive-ones-iii/)" },
+  { id: "freq-most-frequent", label: "Frequency of Most Frequent Element", category: "Sliding Window", difficulty: "Medium", url: "[https://leetcode.com/problems/frequency-of-the-most-frequent-element/](https://leetcode.com/problems/frequency-of-the-most-frequent-element/)" },
+
+  // --- MODULE 4: BINARY SEARCH ---
+  { id: "binary-search", label: "Binary Search", category: "Binary Search", difficulty: "Easy", url: "[https://leetcode.com/problems/binary-search/](https://leetcode.com/problems/binary-search/)" },
+  { id: "search-insert-pos", label: "Search Insert Position", category: "Binary Search", difficulty: "Easy", url: "[https://leetcode.com/problems/search-insert-position/](https://leetcode.com/problems/search-insert-position/)" },
+  { id: "find-first-last-pos", label: "First & Last Position in Sorted Array", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/)" },
+  { id: "first-bad-version", label: "First Bad Version", category: "Binary Search", difficulty: "Easy", url: "[https://leetcode.com/problems/first-bad-version/](https://leetcode.com/problems/first-bad-version/)" },
+  { id: "sqrt-x", label: "Sqrt(x)", category: "Binary Search", difficulty: "Easy", url: "[https://leetcode.com/problems/sqrtx/](https://leetcode.com/problems/sqrtx/)" },
+  { id: "guess-number", label: "Guess Number Higher or Lower", category: "Binary Search", difficulty: "Easy", url: "[https://leetcode.com/problems/guess-number-higher-or-lower/](https://leetcode.com/problems/guess-number-higher-or-lower/)" },
+  { id: "search-rotated-array", label: "Search in Rotated Sorted Array", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/search-in-rotated-sorted-array/](https://leetcode.com/problems/search-in-rotated-sorted-array/)" },
+  { id: "find-peak-element", label: "Find Peak Element", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/find-peak-element/](https://leetcode.com/problems/find-peak-element/)" },
+  { id: "koko-bananas", label: "Koko Eating Bananas", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/koko-eating-bananas/](https://leetcode.com/problems/koko-eating-bananas/)" },
+  { id: "search-2d-matrix", label: "Search a 2D Matrix", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/search-a-2d-matrix/](https://leetcode.com/problems/search-a-2d-matrix/)" },
+  { id: "find-min-rotated", label: "Find Minimum in Rotated Sorted Array", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/)" },
+  { id: "single-elem-sorted", label: "Single Element in a Sorted Array", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/single-element-in-a-sorted-array/](https://leetcode.com/problems/single-element-in-a-sorted-array/)" },
+  { id: "search-2d-matrix-ii", label: "Search a 2D Matrix II", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/search-a-2d-matrix-ii/](https://leetcode.com/problems/search-a-2d-matrix-ii/)" },
+  { id: "ship-packages-d-days", label: "Capacity To Ship Packages in D Days", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/](https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/)" },
+  { id: "aggressive-cows", label: "Aggressive Cows", category: "Binary Search", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/aggressive-cows/1](https://www.geeksforgeeks.org/problems/aggressive-cows/1)" },
+  { id: "painters-partition", label: "Painter's Partition Problem", category: "Binary Search", difficulty: "Medium", url: "[https://www.interviewbit.com/problems/painters-partition-problem/](https://www.interviewbit.com/problems/painters-partition-problem/)" },
+  { id: "median-two-sorted", label: "Median of Two Sorted Arrays", category: "Binary Search", difficulty: "Hard", url: "[https://leetcode.com/problems/median-of-two-sorted-arrays/](https://leetcode.com/problems/median-of-two-sorted-arrays/)" },
+  { id: "max-removable-chars", label: "Max Number of Removable Characters", category: "Binary Search", difficulty: "Medium", url: "[https://leetcode.com/problems/maximum-number-of-removable-characters/](https://leetcode.com/problems/maximum-number-of-removable-characters/)" },
+
+  // --- MODULE 5: INTERVALS ---
+  { id: "merge-intervals", label: "Merge Intervals", category: "Intervals", difficulty: "Medium", url: "[https://leetcode.com/problems/merge-intervals/](https://leetcode.com/problems/merge-intervals/)" },
+  { id: "insert-interval", label: "Insert Interval", category: "Intervals", difficulty: "Medium", url: "[https://leetcode.com/problems/insert-interval/](https://leetcode.com/problems/insert-interval/)" },
+  { id: "non-overlapping-intervals", label: "Non-overlapping Intervals", category: "Intervals", difficulty: "Medium", url: "[https://leetcode.com/problems/non-overlapping-intervals/](https://leetcode.com/problems/non-overlapping-intervals/)" },
+
+  // --- MODULE 6: STACKS & DEQUES ---
+  { id: "valid-parentheses", label: "Valid Parentheses", category: "Stacks", difficulty: "Easy", url: "[https://leetcode.com/problems/valid-parentheses/](https://leetcode.com/problems/valid-parentheses/)" },
+  { id: "asteroid-collision", label: "Asteroid Collision", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/asteroid-collision/](https://leetcode.com/problems/asteroid-collision/)" },
+  { id: "next-greater-i", label: "Next Greater Element I", category: "Stacks", difficulty: "Easy", url: "[https://leetcode.com/problems/next-greater-element-i/](https://leetcode.com/problems/next-greater-element-i/)" },
+  { id: "decode-string", label: "Decode String", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/decode-string/](https://leetcode.com/problems/decode-string/)" },
+  { id: "daily-temperatures", label: "Daily Temperatures", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/daily-temperatures/](https://leetcode.com/problems/daily-temperatures/)" },
+  { id: "remove-k-digits", label: "Remove K Digits", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/remove-k-digits/](https://leetcode.com/problems/remove-k-digits/)" },
+  { id: "largest-histogram", label: "Largest Rectangle in Histogram", category: "Stacks", difficulty: "Hard", url: "[https://leetcode.com/problems/largest-rectangle-in-histogram/](https://leetcode.com/problems/largest-rectangle-in-histogram/)" },
+  { id: "queue-using-stacks", label: "Implement Queue using Stacks", category: "Stacks", difficulty: "Easy", url: "[https://leetcode.com/problems/implement-queue-using-stacks/](https://leetcode.com/problems/implement-queue-using-stacks/)" },
+  { id: "min-stack", label: "Min Stack", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/min-stack/](https://leetcode.com/problems/min-stack/)" },
+  { id: "eval-rpn", label: "Evaluate Reverse Polish Notation", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/evaluate-reverse-polish-notation/](https://leetcode.com/problems/evaluate-reverse-polish-notation/)" },
+  { id: "next-greater-ii", label: "Next Greater Element II", category: "Stacks", difficulty: "Medium", url: "[https://leetcode.com/problems/next-greater-element-ii/](https://leetcode.com/problems/next-greater-element-ii/)" },
+  { id: "sliding-window-max", label: "Sliding Window Maximum", category: "Stacks", difficulty: "Hard", url: "[https://leetcode.com/problems/sliding-window-maximum/](https://leetcode.com/problems/sliding-window-maximum/)" },
+  { id: "first-neg-window-k", label: "First Negative Int in Window K", category: "Stacks", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/first-negative-integer-in-every-window-of-size-k3345/1](https://www.geeksforgeeks.org/problems/first-negative-integer-in-every-window-of-size-k3345/1)" },
+  { id: "shortest-subarray-sum-k", label: "Shortest Subarray Sum >= K", category: "Stacks", difficulty: "Hard", url: "[https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/](https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/)" },
+
+  // --- MODULE 7: LINKED LISTS ---
+  { id: "reverse-linked-list", label: "Reverse Linked List", category: "Linked Lists", difficulty: "Easy", url: "[https://leetcode.com/problems/reverse-linked-list/](https://leetcode.com/problems/reverse-linked-list/)" },
+  { id: "middle-linked-list", label: "Middle of the Linked List", category: "Linked Lists", difficulty: "Easy", url: "[https://leetcode.com/problems/middle-of-the-linked-list/](https://leetcode.com/problems/middle-of-the-linked-list/)" },
+  { id: "linked-list-cycle", label: "Linked List Cycle", category: "Linked Lists", difficulty: "Easy", url: "[https://leetcode.com/problems/linked-list-cycle/](https://leetcode.com/problems/linked-list-cycle/)" },
+  { id: "merge-two-lists", label: "Merge Two Sorted Lists", category: "Linked Lists", difficulty: "Easy", url: "[https://leetcode.com/problems/merge-two-sorted-lists/](https://leetcode.com/problems/merge-two-sorted-lists/)" },
+  { id: "remove-nth-end", label: "Remove Nth Node From End", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/remove-nth-node-from-end-of-list/](https://leetcode.com/problems/remove-nth-node-from-end-of-list/)" },
+  { id: "intersection-two-lists", label: "Intersection of Two Linked Lists", category: "Linked Lists", difficulty: "Easy", url: "[https://leetcode.com/problems/intersection-of-two-lists/](https://leetcode.com/problems/intersection-of-two-lists/)" },
+  { id: "palindrome-linked-list", label: "Palindrome Linked List", category: "Linked Lists", difficulty: "Easy", url: "[https://leetcode.com/problems/palindrome-linked-list/](https://leetcode.com/problems/palindrome-linked-list/)" },
+  { id: "copy-random-list", label: "Copy List with Random Pointer", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/copy-list-with-random-pointer/](https://leetcode.com/problems/copy-list-with-random-pointer/)" },
+  { id: "flatten-multilevel-dll", label: "Flatten Multilevel Doubly List", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/flatten-a-multilevel-doubly-linked-list/](https://leetcode.com/problems/flatten-a-multilevel-doubly-linked-list/)" },
+  { id: "lru-cache", label: "LRU Cache", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/lru-cache/](https://leetcode.com/problems/lru-cache/)" },
+  { id: "add-two-numbers", label: "Add Two Numbers", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/add-two-numbers/](https://leetcode.com/problems/add-two-numbers/)" },
+  { id: "linked-list-cycle-ii", label: "Linked List Cycle II", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/linked-list-cycle-ii/](https://leetcode.com/problems/linked-list-cycle-ii/)" },
+  { id: "reorder-list", label: "Reorder List", category: "Linked Lists", difficulty: "Medium", url: "[https://leetcode.com/problems/reorder-list/](https://leetcode.com/problems/reorder-list/)" },
+  { id: "reverse-k-group", label: "Reverse Nodes in k-Group", category: "Linked Lists", difficulty: "Hard", url: "[https://leetcode.com/problems/reverse-nodes-in-k-group/](https://leetcode.com/problems/reverse-nodes-in-k-group/)" },
+
+  // --- MODULE 8: RECURSION & BACKTRACKING ---
+  { id: "reverse-string-rec", label: "Reverse String", category: "Backtracking", difficulty: "Easy", url: "[https://leetcode.com/problems/reverse-string/](https://leetcode.com/problems/reverse-string/)" },
+  { id: "generate-parentheses", label: "Generate Parentheses", category: "Backtracking", difficulty: "Medium", url: "[https://leetcode.com/problems/generate-parentheses/](https://leetcode.com/problems/generate-parentheses/)" },
+  { id: "subsets", label: "Subsets", category: "Backtracking", difficulty: "Medium", url: "[https://leetcode.com/problems/subsets/](https://leetcode.com/problems/subsets/)" },
+  { id: "combination-sum", label: "Combination Sum", category: "Backtracking", difficulty: "Medium", url: "[https://leetcode.com/problems/combination-sum/](https://leetcode.com/problems/combination-sum/)" },
+  { id: "combination-sum-ii", label: "Combination Sum II", category: "Backtracking", difficulty: "Medium", url: "[https://leetcode.com/problems/combination-sum-ii/](https://leetcode.com/problems/combination-sum-ii/)" },
+  { id: "permutations", label: "Permutations", category: "Backtracking", difficulty: "Medium", url: "[https://leetcode.com/problems/permutations/](https://leetcode.com/problems/permutations/)" },
+  { id: "permutations-ii", label: "Permutations II", category: "Backtracking", difficulty: "Medium", url: "[https://leetcode.com/problems/permutations-ii/](https://leetcode.com/problems/permutations-ii/)" },
+  { id: "n-queens", label: "N-Queens", category: "Backtracking", difficulty: "Hard", url: "[https://leetcode.com/problems/n-queens/](https://leetcode.com/problems/n-queens/)" },
+  { id: "sudoku-solver", label: "Sudoku Solver", category: "Backtracking", difficulty: "Hard", url: "[https://leetcode.com/problems/sudoku-solver/](https://leetcode.com/problems/sudoku-solver/)" },
+
+  // --- MODULE 9: GREEDY ---
+  { id: "activity-selection", label: "Activity Selection", category: "Greedy", difficulty: "Easy", url: "[https://www.geeksforgeeks.org/problems/activity-selection-1587115620/1](https://www.geeksforgeeks.org/problems/activity-selection-1587115620/1)" },
+  { id: "min-coins-greedy", label: "Minimum Number of Coins", category: "Greedy", difficulty: "Easy", url: "[https://www.geeksforgeeks.org/problems/-minimum-number-of-coins4426/1](https://www.geeksforgeeks.org/problems/-minimum-number-of-coins4426/1)" },
+  { id: "jump-game", label: "Jump Game", category: "Greedy", difficulty: "Medium", url: "[https://leetcode.com/problems/jump-game/](https://leetcode.com/problems/jump-game/)" },
+  { id: "min-arrows-balloons", label: "Arrows to Burst Balloons", category: "Greedy", difficulty: "Medium", url: "[https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/)" },
+  { id: "gas-station", label: "Gas Station", category: "Greedy", difficulty: "Medium", url: "[https://leetcode.com/problems/gas-station/](https://leetcode.com/problems/gas-station/)" },
+  { id: "minimum-platforms", label: "Minimum Platforms", category: "Greedy", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/minimum-platforms-1587115620/1](https://www.geeksforgeeks.org/problems/minimum-platforms-1587115620/1)" },
+  { id: "jump-game-ii", label: "Jump Game II", category: "Greedy", difficulty: "Medium", url: "[https://leetcode.com/problems/jump-game-ii/](https://leetcode.com/problems/jump-game-ii/)" },
+  { id: "partition-labels", label: "Partition Labels", category: "Greedy", difficulty: "Medium", url: "[https://leetcode.com/problems/partition-labels/](https://leetcode.com/problems/partition-labels/)" },
+  { id: "assign-cookies", label: "Assign Cookies", category: "Greedy", difficulty: "Easy", url: "[https://leetcode.com/problems/assign-cookies/](https://leetcode.com/problems/assign-cookies/)" },
+  { id: "candy", label: "Candy", category: "Greedy", difficulty: "Hard", url: "[https://leetcode.com/problems/candy/](https://leetcode.com/problems/candy/)" },
+
+  // --- MODULE 10: TREES & BST ---
+  { id: "tree-preorder", label: "Binary Tree Preorder Traversal", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/binary-tree-preorder-traversal/](https://leetcode.com/problems/binary-tree-preorder-traversal/)" },
+  { id: "tree-inorder", label: "Binary Tree Inorder Traversal", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/binary-tree-inorder-traversal/](https://leetcode.com/problems/binary-tree-inorder-traversal/)" },
+  { id: "tree-postorder", label: "Binary Tree Postorder Traversal", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/binary-tree-postorder-traversal/](https://leetcode.com/problems/binary-tree-postorder-traversal/)" },
+  { id: "tree-level-order", label: "Binary Tree Level Order Traversal", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/binary-tree-level-order-traversal/](https://leetcode.com/problems/binary-tree-level-order-traversal/)" },
+  { id: "max-depth-tree", label: "Maximum Depth of Binary Tree", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/maximum-depth-of-binary-tree/](https://leetcode.com/problems/maximum-depth-of-binary-tree/)" },
+  { id: "same-tree", label: "Same Tree", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/same-tree/](https://leetcode.com/problems/same-tree/)" },
+  { id: "invert-tree", label: "Invert Binary Tree", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/invert-binary-tree/](https://leetcode.com/problems/invert-binary-tree/)" },
+  { id: "diameter-tree", label: "Diameter of Binary Tree", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/diameter-of-binary-tree/](https://leetcode.com/problems/diameter-of-binary-tree/)" },
+  { id: "min-depth-tree", label: "Minimum Depth of Binary Tree", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/minimum-depth-of-binary-tree/](https://leetcode.com/problems/minimum-depth-of-binary-tree/)" },
+  { id: "path-sum", label: "Path Sum", category: "Trees", difficulty: "Easy", url: "[https://leetcode.com/problems/path-sum/](https://leetcode.com/problems/path-sum/)" },
+  { id: "path-sum-ii", label: "Path Sum II", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/path-sum-ii/](https://leetcode.com/problems/path-sum-ii/)" },
+  { id: "right-side-view", label: "Binary Tree Right Side View", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/binary-tree-right-side-view/](https://leetcode.com/problems/binary-tree-right-side-view/)" },
+  { id: "lca-binary-tree", label: "Lowest Common Ancestor in Binary Tree", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/)" },
+  { id: "left-view-tree", label: "Left View of Binary Tree", category: "Trees", difficulty: "Easy", url: "[https://www.geeksforgeeks.org/problems/left-view-of-binary-tree/1](https://www.geeksforgeeks.org/problems/left-view-of-binary-tree/1)" },
+  { id: "top-view-tree", label: "Top View of Binary Tree", category: "Trees", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/top-view-of-binary-tree/1](https://www.geeksforgeeks.org/problems/top-view-of-binary-tree/1)" },
+  { id: "bottom-view-tree", label: "Bottom View of Binary Tree", category: "Trees", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/bottom-view-of-binary-tree/1](https://www.geeksforgeeks.org/problems/bottom-view-of-binary-tree/1)" },
+  { id: "diagonal-traversal-tree", label: "Diagonal Traversal of Binary Tree", category: "Trees", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/diagonal-traversal-of-binary-tree/1](https://www.geeksforgeeks.org/problems/diagonal-traversal-of-binary-tree/1)" },
+  { id: "vertical-order-traversal", label: "Vertical Order Traversal", category: "Trees", difficulty: "Hard", url: "[https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree/](https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree/)" },
+  { id: "insert-bst", label: "Insert into a Binary Search Tree", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/insert-into-a-binary-search-tree/](https://leetcode.com/problems/insert-into-a-binary-search-tree/)" },
+  { id: "delete-node-bst", label: "Delete Node in a BST", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/delete-node-in-a-bst/](https://leetcode.com/problems/delete-node-in-a-bst/)" },
+  { id: "validate-bst", label: "Validate Binary Search Tree", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/validate-binary-search-tree/](https://leetcode.com/problems/validate-binary-search-tree/)" },
+  { id: "recover-bst", label: "Recover Binary Search Tree", category: "Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/recover-binary-search-tree/](https://leetcode.com/problems/recover-binary-search-tree/)" },
+  { id: "max-path-sum", label: "Binary Tree Maximum Path Sum", category: "Trees", difficulty: "Hard", url: "[https://leetcode.com/problems/binary-tree-maximum-path-sum/](https://leetcode.com/problems/binary-tree-maximum-path-sum/)" },
+
+  // --- MODULE 11: HEAPS & PRIORITY QUEUES ---
+  { id: "kth-largest-array", label: "Kth Largest Element in an Array", category: "Heaps", difficulty: "Medium", url: "[https://leetcode.com/problems/kth-largest-element-in-an-array/](https://leetcode.com/problems/kth-largest-element-in-an-array/)" },
+  { id: "top-k-frequent", label: "Top K Frequent Elements", category: "Heaps", difficulty: "Medium", url: "[https://leetcode.com/problems/top-k-frequent-elements/](https://leetcode.com/problems/top-k-frequent-elements/)" },
+  { id: "k-closest-points", label: "K Closest Points to Origin", category: "Heaps", difficulty: "Medium", url: "[https://leetcode.com/problems/k-closest-points-to-origin/](https://leetcode.com/problems/k-closest-points-to-origin/)" },
+  { id: "merge-k-lists", label: "Merge k Sorted Lists", category: "Heaps", difficulty: "Hard", url: "[https://leetcode.com/problems/merge-k-sorted-lists/](https://leetcode.com/problems/merge-k-sorted-lists/)" },
+  { id: "find-k-pairs-smallest-sums", label: "Find K Pairs with Smallest Sums", category: "Heaps", difficulty: "Medium", url: "[https://leetcode.com/problems/find-k-pairs-with-smallest-sums/](https://leetcode.com/problems/find-k-pairs-with-smallest-sums/)" },
+  { id: "median-data-stream", label: "Find Median from Data Stream", category: "Heaps", difficulty: "Hard", url: "[https://leetcode.com/problems/find-median-from-data-stream/](https://leetcode.com/problems/find-median-from-data-stream/)" },
+  { id: "sliding-window-median", label: "Sliding Window Median", category: "Heaps", difficulty: "Hard", url: "[https://leetcode.com/problems/sliding-window-median/](https://leetcode.com/problems/sliding-window-median/)" },
+  { id: "ipo-heap", label: "IPO", category: "Heaps", difficulty: "Hard", url: "[https://leetcode.com/problems/ipo/](https://leetcode.com/problems/ipo/)" },
+
+  // --- MODULE 12: DYNAMIC PROGRAMMING ---
+  { id: "fibonacci-number", label: "Fibonacci Number", category: "Dynamic Programming", difficulty: "Easy", url: "[https://leetcode.com/problems/fibonacci-number/](https://leetcode.com/problems/fibonacci-number/)" },
+  { id: "climbing-stairs", label: "Climbing Stairs", category: "Dynamic Programming", difficulty: "Easy", url: "[https://leetcode.com/problems/climbing-stairs/](https://leetcode.com/problems/climbing-stairs/)" },
+  { id: "house-robber", label: "House Robber", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/house-robber/](https://leetcode.com/problems/house-robber/)" },
+  { id: "house-robber-ii", label: "House Robber II", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/house-robber-ii/](https://leetcode.com/problems/house-robber-ii/)" },
+  { id: "delete-and-earn", label: "Delete and Earn", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/delete-and-earn/](https://leetcode.com/problems/delete-and-earn/)" },
+  { id: "partition-equal-subset-sum", label: "Partition Equal Subset Sum", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/partition-equal-subset-sum/](https://leetcode.com/problems/partition-equal-subset-sum/)" },
+  { id: "coin-change", label: "Coin Change", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/coin-change/](https://leetcode.com/problems/coin-change/)" },
+  { id: "coin-change-ii", label: "Coin Change II", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/coin-change-ii/](https://leetcode.com/problems/coin-change-ii/)" },
+  { id: "decode-ways", label: "Decode Ways", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/decode-ways/](https://leetcode.com/problems/decode-ways/)" },
+  { id: "max-product-subarray", label: "Maximum Product Subarray", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/maximum-product-subarray/](https://leetcode.com/problems/maximum-product-subarray/)" },
+  { id: "word-break", label: "Word Break", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/word-break/](https://leetcode.com/problems/word-break/)" },
+  { id: "lcs", label: "Longest Common Subsequence", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-common-subsequence/](https://leetcode.com/problems/longest-common-subsequence/)" },
+  { id: "edit-distance", label: "Edit Distance", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/edit-distance/](https://leetcode.com/problems/edit-distance/)" },
+  { id: "unique-paths", label: "Unique Paths", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/unique-paths/](https://leetcode.com/problems/unique-paths/)" },
+  { id: "unique-paths-ii", label: "Unique Paths II", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/unique-paths-ii/](https://leetcode.com/problems/unique-paths-ii/)" },
+  { id: "min-path-sum", label: "Minimum Path Sum", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/minimum-path-sum/](https://leetcode.com/problems/minimum-path-sum/)" },
+  { id: "min-falling-path-sum", label: "Minimum Falling Path Sum", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/minimum-falling-path-sum/](https://leetcode.com/problems/minimum-falling-path-sum/)" },
+  { id: "out-of-boundary-paths", label: "Out of Boundary Paths", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/out-of-boundary-paths/](https://leetcode.com/problems/out-of-boundary-paths/)" },
+  { id: "stock-ii", label: "Best Time to Buy & Sell Stock II", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/)" },
+  { id: "stock-fee", label: "Stock with Transaction Fee", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)" },
+  { id: "stock-cooldown", label: "Stock with Cooldown", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/)" },
+  { id: "knapsack-01", label: "0/1 Knapsack Problem", category: "Dynamic Programming", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1](https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1)" },
+  { id: "rod-cutting", label: "Rod Cutting", category: "Dynamic Programming", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/rod-cutting0840/1](https://www.geeksforgeeks.org/problems/rod-cutting0840/1)" },
+  { id: "lis", label: "Longest Increasing Subsequence", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/longest-increasing-subsequence/](https://leetcode.com/problems/longest-increasing-subsequence/)" },
+  { id: "interleaving-string", label: "Interleaving String", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/interleaving-string/](https://leetcode.com/problems/interleaving-string/)" },
+  { id: "palindromic-substrings", label: "Palindromic Substrings", category: "Dynamic Programming", difficulty: "Medium", url: "[https://leetcode.com/problems/palindromic-substrings/](https://leetcode.com/problems/palindromic-substrings/)" },
+  { id: "russian-doll-envelopes", label: "Russian Doll Envelopes", category: "Dynamic Programming", difficulty: "Hard", url: "[https://leetcode.com/problems/russian-doll-envelopes/](https://leetcode.com/problems/russian-doll-envelopes/)" },
+
+  // --- MODULE 13: BIT MANIPULATION ---
+  { id: "number-1-bits", label: "Number of 1 Bits", category: "Bit Manipulation", difficulty: "Easy", url: "[https://leetcode.com/problems/number-of-1-bits/](https://leetcode.com/problems/number-of-1-bits/)" },
+  { id: "single-number", label: "Single Number", category: "Bit Manipulation", difficulty: "Easy", url: "[https://leetcode.com/problems/single-number/](https://leetcode.com/problems/single-number/)" },
+  { id: "reverse-bits", label: "Reverse Bits", category: "Bit Manipulation", difficulty: "Easy", url: "[https://leetcode.com/problems/reverse-bits/](https://leetcode.com/problems/reverse-bits/)" },
+  { id: "single-number-ii", label: "Single Number II", category: "Bit Manipulation", difficulty: "Medium", url: "[https://leetcode.com/problems/single-number-ii/](https://leetcode.com/problems/single-number-ii/)" },
+  { id: "neighboring-bitwise-xor", label: "Neighboring Bitwise XOR", category: "Bit Manipulation", difficulty: "Medium", url: "[https://leetcode.com/problems/neighboring-bitwise-xor/](https://leetcode.com/problems/neighboring-bitwise-xor/)" },
+  { id: "total-hamming-distance", label: "Total Hamming Distance", category: "Bit Manipulation", difficulty: "Medium", url: "[https://leetcode.com/problems/total-hamming-distance/](https://leetcode.com/problems/total-hamming-distance/)" },
+  { id: "letter-case-permutation", label: "Letter Case Permutation", category: "Bit Manipulation", difficulty: "Medium", url: "[https://leetcode.com/problems/letter-case-permutation/](https://leetcode.com/problems/letter-case-permutation/)" },
+  { id: "min-flips-or", label: "Min Flips to Make a OR b == c", category: "Bit Manipulation", difficulty: "Medium", url: "[https://leetcode.com/problems/minimum-flips-to-make-a-or-b-equal-to-c/](https://leetcode.com/problems/minimum-flips-to-make-a-or-b-equal-to-c/)" },
+
+  // --- MODULE 14: GRAPH ALGORITHMS ---
+  { id: "graph-dfs-traversal", label: "Depth First Traversal", category: "Graphs", difficulty: "Easy", url: "[https://www.geeksforgeeks.org/problems/depth-first-traversal-for-a-graph/1](https://www.geeksforgeeks.org/problems/depth-first-traversal-for-a-graph/1)" },
+  { id: "adjacency-list-impl", label: "Implementation of Adjacency List", category: "Graphs", difficulty: "Easy", url: "[https://www.geeksforgeeks.org/java/java-program-to-implement-adjacency-list/](https://www.geeksforgeeks.org/java/java-program-to-implement-adjacency-list/)" },
+  { id: "graph-bfs-traversal", label: "BFS Traversal", category: "Graphs", difficulty: "Easy", url: "[https://www.geeksforgeeks.org/problems/bfs-traversal-of-graph/1](https://www.geeksforgeeks.org/problems/bfs-traversal-of-graph/1)" },
+  { id: "path-exists-graph", label: "Find if Path Exists", category: "Graphs", difficulty: "Easy", url: "[https://leetcode.com/problems/find-if-path-exists-in-graph/](https://leetcode.com/problems/find-if-path-exists-in-graph/)" },
+  { id: "keys-and-rooms", label: "Keys and Rooms", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/keys-and-rooms/](https://leetcode.com/problems/keys-and-rooms/)" },
+  { id: "all-paths-source-target", label: "All Paths Source to Target", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/all-paths-from-source-to-target/](https://leetcode.com/problems/all-paths-from-source-to-target/)" },
+  { id: "number-of-provinces", label: "Number of Provinces", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/number-of-provinces/](https://leetcode.com/problems/number-of-provinces/)" },
+  { id: "network-connected", label: "Operations to Make Network Connected", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/number-of-operations-to-make-network-connected/](https://leetcode.com/problems/number-of-operations-to-make-network-connected/)" },
+  { id: "flood-fill", label: "Flood Fill", category: "Graphs", difficulty: "Easy", url: "[https://leetcode.com/problems/flood-fill/](https://leetcode.com/problems/flood-fill/)" },
+  { id: "number-of-islands", label: "Number of Islands", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/number-of-islands/](https://leetcode.com/problems/number-of-islands/)" },
+  { id: "max-area-island", label: "Max Area of Island", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/max-area-of-island/](https://leetcode.com/problems/max-area-of-island/)" },
+  { id: "number-closed-islands", label: "Number of Closed Islands", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/number-of-closed-islands/](https://leetcode.com/problems/number-of-closed-islands/)" },
+  { id: "rotting-oranges", label: "Rotting Oranges", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/rotting-oranges/](https://leetcode.com/problems/rotting-oranges/)" },
+  { id: "01-matrix", label: "01 Matrix", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/01-matrix/](https://leetcode.com/problems/01-matrix/)" },
+  { id: "map-highest-peak", label: "Map of Highest Peak", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/map-of-highest-peak/](https://leetcode.com/problems/map-of-highest-peak/)" },
+  { id: "as-far-from-land", label: "As Far from Land as Possible", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/as-far-from-land-as-possible/](https://leetcode.com/problems/as-far-from-land-as-possible/)" },
+  { id: "detect-cycle-undirected", label: "Detect Cycle in Undirected Graph", category: "Graphs", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/detect-cycle-in-an-undirected-graph/1](https://www.geeksforgeeks.org/problems/detect-cycle-in-an-undirected-graph/1)" },
+  { id: "detect-cycle-directed", label: "Detect Cycle in Directed Graph", category: "Graphs", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/detect-cycle-in-a-directed-graph/1](https://www.geeksforgeeks.org/problems/detect-cycle-in-a-directed-graph/1)" },
+  { id: "topological-sort", label: "Topological Sort", category: "Graphs", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/topological-sort/1](https://www.geeksforgeeks.org/problems/topological-sort/1)" },
+  { id: "course-schedule", label: "Course Schedule", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/course-schedule/](https://leetcode.com/problems/course-schedule/)" },
+  { id: "course-schedule-ii", label: "Course Schedule II", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/course-schedule-ii/](https://leetcode.com/problems/course-schedule-ii/)" },
+  { id: "alien-dictionary", label: "Alien Dictionary", category: "Graphs", difficulty: "Hard", url: "[https://www.geeksforgeeks.org/problems/alien-dictionary/1](https://www.geeksforgeeks.org/problems/alien-dictionary/1)" },
+  { id: "is-graph-bipartite", label: "Is Graph Bipartite?", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/is-graph-bipartite/](https://leetcode.com/problems/is-graph-bipartite/)" },
+  { id: "possible-bipartition", label: "Possible Bipartition", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/possible-bipartition/](https://leetcode.com/problems/possible-bipartition/)" },
+  { id: "shortest-path-unit-dist", label: "Shortest Path Unit Distance", category: "Graphs", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/shortest-path-in-undirected-graph-having-unit-distance/1](https://www.geeksforgeeks.org/problems/shortest-path-in-undirected-graph-having-unit-distance/1)" },
+  { id: "dijkstra-algo", label: "Dijkstra Algorithm", category: "Graphs", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/implementing-dijkstra-set-1-adjacency-matrix/1](https://www.geeksforgeeks.org/problems/implementing-dijkstra-set-1-adjacency-matrix/1)" },
+  { id: "shortest-path-binary-matrix", label: "Shortest Path in Binary Matrix", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/shortest-path-in-binary-matrix/](https://leetcode.com/problems/shortest-path-in-binary-matrix/)" },
+  { id: "network-delay-time", label: "Network Delay Time", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/network-delay-time/](https://leetcode.com/problems/network-delay-time/)" },
+  { id: "path-min-effort", label: "Path With Minimum Effort", category: "Graphs", difficulty: "Medium", url: "[https://leetcode.com/problems/path-with-minimum-effort/](https://leetcode.com/problems/path-with-minimum-effort/)" },
+  { id: "redundant-connection", label: "Redundant Connection", category: "Graphs (DSU)", difficulty: "Medium", url: "[https://leetcode.com/problems/redundant-connection/](https://leetcode.com/problems/redundant-connection/)" },
+  { id: "mst-kruskal-prim", label: "Minimum Spanning Tree", category: "Graphs (MST)", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1](https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1)" },
+  { id: "min-cost-connect-points", label: "Min Cost to Connect All Points", category: "Graphs (MST)", difficulty: "Medium", url: "[https://leetcode.com/problems/min-cost-to-connect-all-points/](https://leetcode.com/problems/min-cost-to-connect-all-points/)" },
+  { id: "bellman-ford", label: "Distance from the Source (Bellman-Ford)", category: "Graphs (Shortest Path)", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/distance-from-the-source-bellman-ford-algorithm/1](https://www.geeksforgeeks.org/problems/distance-from-the-source-bellman-ford-algorithm/1)" },
+  { id: "cheapest-flights-k-stops", label: "Cheapest Flights Within K Stops", category: "Graphs (Shortest Path)", difficulty: "Medium", url: "[https://leetcode.com/problems/cheapest-flights-within-k-stops/](https://leetcode.com/problems/cheapest-flights-within-k-stops/)" },
+  { id: "floyd-warshall", label: "Implementing Floyd Warshall", category: "Graphs (All-Pairs)", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/implementing-floyd-warshall2042/1](https://www.geeksforgeeks.org/problems/implementing-floyd-warshall2042/1)" },
+  { id: "city-smallest-neighbors", label: "Find City With Smallest Number of Neighbors", category: "Graphs (All-Pairs)", difficulty: "Medium", url: "[https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/](https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/)" },
+  { id: "course-schedule-iv", label: "Course Schedule IV", category: "Graphs (All-Pairs)", difficulty: "Medium", url: "[https://leetcode.com/problems/course-schedule-iv/](https://leetcode.com/problems/course-schedule-iv/)" },
+  { id: "scc-kosaraju", label: "Strongly Connected Components (Kosaraju)", category: "Graphs (SCC)", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/strongly-connected-components-kosarajus-algo/1](https://www.geeksforgeeks.org/problems/strongly-connected-components-kosarajus-algo/1)" },
+  { id: "max-employees-meeting", label: "Maximum Employees to Be Invited", category: "Graphs", difficulty: "Hard", url: "[https://leetcode.com/problems/maximum-employees-to-be-invited-to-a-meeting/](https://leetcode.com/problems/maximum-employees-to-be-invited-to-a-meeting/)" },
+  { id: "eventual-safe-states", label: "Find Eventual Safe States", category: "Graphs (Topo Sort)", difficulty: "Medium", url: "[https://leetcode.com/problems/find-eventual-safe-states/](https://leetcode.com/problems/find-eventual-safe-states/)" },
+  
+  // --- MODULE 15: SEGMENT TREES ---
+  { id: "range-sum-mutable", label: "Range Sum Query - Mutable", category: "Segment Trees", difficulty: "Medium", url: "[https://leetcode.com/problems/range-sum-query-mutable/](https://leetcode.com/problems/range-sum-query-mutable/)" },
+  { id: "range-min-query", label: "Range Minimum Query", category: "Segment Trees", difficulty: "Medium", url: "[https://www.geeksforgeeks.org/problems/range-minimum-query/1](https://www.geeksforgeeks.org/problems/range-minimum-query/1)" }
+];
+
+```
+
+#### **Prerequisite Edges Dataset:**
+
+```javascript
+const seedEdges = [
+  // Arrays
+  { from: "running-sum", to: "subarray-sum-k" },
+  { from: "two-sum", to: "3sum" },
+  { from: "two-sum", to: "subarray-sum-k" },
+  { from: "max-subarray", to: "max-product-subarray" },
+  { from: "subarray-sum-k", to: "contiguous-array" },
+  { from: "subarray-sum-k", to: "subarray-div-k" },
+  { from: "stock-1", to: "stock-ii" },
+
+  // Maps / Windows
+  { from: "contains-duplicate", to: "longest-consec-seq" },
+  { from: "valid-anagram", to: "find-all-anagrams" },
+  { from: "valid-palindrome", to: "container-water" },
+  { from: "valid-palindrome", to: "longest-palindromic-substr" },
+  { from: "container-water", to: "3sum" },
+  { from: "longest-substr-no-repeat", to: "longest-repeat-char-replace" },
+  { from: "longest-substr-no-repeat", to: "min-window-substr" },
+  { from: "find-all-anagrams", to: "permutation-in-string" },
+
+  // Binary Search
+  { from: "binary-search", to: "search-insert-pos" },
+  { from: "binary-search", to: "search-rotated-array" },
+  { from: "binary-search", to: "koko-bananas" },
+  { from: "search-insert-pos", to: "search-2d-matrix" },
+  { from: "search-rotated-array", to: "find-min-rotated" },
+  { from: "search-rotated-array", to: "median-two-sorted" },
+  { from: "koko-bananas", to: "ship-packages-d-days" },
+  { from: "ship-packages-d-days", to: "aggressive-cows" },
+  
+  // Stacks & Lists
+  { from: "valid-parentheses", to: "decode-string" },
+  { from: "valid-parentheses", to: "next-greater-i" },
+  { from: "next-greater-i", to: "daily-temperatures" },
+  { from: "daily-temperatures", to: "largest-histogram" },
+  { from: "largest-histogram", to: "sliding-window-max" },
+  { from: "reverse-linked-list", to: "middle-linked-list" },
+  { from: "middle-linked-list", to: "linked-list-cycle" },
+  { from: "reverse-linked-list", to: "palindrome-linked-list" },
+
+  // Recursion & Trees
+  { from: "reverse-string-rec", to: "generate-parentheses" },
+  { from: "subsets", to: "combination-sum" },
+  { from: "tree-preorder", to: "max-depth-tree" },
+  { from: "max-depth-tree", to: "tree-level-order" },
+  { from: "tree-level-order", to: "right-side-view" },
+  { from: "max-depth-tree", to: "lca-binary-tree" },
+  { from: "tree-inorder", to: "validate-bst" },
+
+  // Heaps & DP
+  { from: "kth-largest-array", to: "top-k-frequent" },
+  { from: "top-k-frequent", to: "median-data-stream" },
+  { from: "fibonacci-number", to: "climbing-stairs" },
+  { from: "climbing-stairs", to: "house-robber" },
+  { from: "subsets", to: "partition-equal-subset-sum" },
+  { from: "climbing-stairs", to: "unique-paths" },
+  { from: "unique-paths", to: "lcs" },
+  { from: "lcs", to: "edit-distance" },
+  { from: "lcs", to: "interleaving-string" },
+  { from: "longest-palindromic-substr", to: "palindromic-substrings" },
+  { from: "lis", to: "russian-doll-envelopes" },
+
+  // Advanced Graphs
+  { from: "adjacency-list-impl", to: "graph-bfs-traversal" },
+  { from: "graph-bfs-traversal", to: "number-of-provinces" },
+  { from: "number-of-provinces", to: "detect-cycle-undirected" },
+  { from: "number-of-provinces", to: "redundant-connection" }, // DSU
+  { from: "redundant-connection", to: "mst-kruskal-prim" },
+  { from: "mst-kruskal-prim", to: "min-cost-connect-points" },
+  { from: "detect-cycle-directed", to: "topological-sort" },
+  { from: "topological-sort", to: "course-schedule" },
+  { from: "kth-largest-array", to: "dijkstra-algo" },
+  { from: "dijkstra-algo", to: "network-delay-time" },
+  { from: "dijkstra-algo", to: "bellman-ford" },
+  { from: "bellman-ford", to: "floyd-warshall" },
+  { from: "floyd-warshall", to: "city-smallest-neighbors" },
+  { from: "floyd-warshall", to: "course-schedule-iv" },
+  { from: "graph-dfs-traversal", to: "scc-kosaraju" },
+  { from: "topological-sort", to: "eventual-safe-states" },
+  { from: "bellman-ford", to: "cheapest-flights-k-stops" }
+];
+
+```
+
+---
+
+### 4. Output Deliverables
+
+Please output the following structure:
+
+1. **Supabase SQL Schema** (Tables, RLS Policies, foreign keys).
+2. **Next.js App Structure** (File tree).
+3. **Core Components:**
+* `Database Fetch Hook` (Fetching nodes, edges, and active user progress).
+* `GraphCanvas.tsx` (Vis.js React wrapper handling colors based on locked/ready/completed state).
+* `TopologicalSort.ts` (Kahn's algorithm utility).
+
+
+4. **Deployment Guide** (Vercel + Supabase connection steps).
+
+```
+
+```
