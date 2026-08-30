@@ -7,6 +7,7 @@ import { GraphCanvas } from '@/components/GraphCanvas';
 import { NodeInspector } from '@/components/NodeInspector';
 import { TopologicalPlanner } from '@/components/TopologicalPlanner';
 import { AdminImporter } from '@/components/AdminImporter';
+import { LeetCodeSyncModal } from '@/components/LeetCodeSyncModal';
 import { DSANode, DSAEdge, UserProgressMap } from '@/lib/types';
 import { calculateGraphStats } from '@/lib/topoSort';
 import {
@@ -16,7 +17,7 @@ import {
   supabase,
   isSupabaseConfigured,
 } from '@/lib/supabase/client';
-import { X, Mail, Lock, LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { X, Mail, Lock, LogIn, UserPlus } from 'lucide-react';
 
 export default function Home() {
   const [nodes, setNodes] = useState<DSANode[]>([]);
@@ -38,6 +39,7 @@ export default function Home() {
   // Auth State & Auth Modal
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLeetCodeModal, setShowLeetCodeModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,7 +64,6 @@ export default function Home() {
           activeUserKey = u.id;
         }
 
-        // Auth state change listener
         supabase.auth.onAuthStateChange(async (_event, session) => {
           if (session?.user) {
             const u = { id: session.user.id, email: session.user.email };
@@ -124,7 +125,6 @@ export default function Home() {
       return;
     }
 
-    // Try Supabase Auth if configured
     if (isSupabaseConfigured && supabase) {
       try {
         if (authMode === 'signup') {
@@ -152,11 +152,9 @@ export default function Home() {
         }
       } catch (err: any) {
         console.warn('Supabase Auth warning:', err.message);
-        // Fallback to local session login if Supabase auth errors (e.g. unconfirmed email)
       }
     }
 
-    // Local / Offline Account Login (Always works!)
     const localUser = { id: email.toLowerCase().trim(), email: email.toLowerCase().trim() };
     setUser(localUser);
     if (typeof window !== 'undefined') {
@@ -197,6 +195,7 @@ export default function Home() {
         setActiveTab={setActiveTab}
         userEmail={user?.email}
         onOpenAuth={() => setShowAuthModal(true)}
+        onOpenLeetCodeSync={() => setShowLeetCodeModal(true)}
         onSignOut={handleSignOut}
       />
 
@@ -213,7 +212,7 @@ export default function Home() {
         ) : (
           <div className="flex flex-1 flex-col overflow-hidden gap-4">
             
-            {/* Filter Controls (shown on Graph and Plan tabs) */}
+            {/* Filter Controls */}
             {activeTab !== 'admin' && (
               <FilterBar
                 categories={categories}
@@ -290,6 +289,16 @@ export default function Home() {
           onSelectNode={id => setSelectedNodeId(id)}
         />
       )}
+
+      {/* LeetCode Sync Modal */}
+      <LeetCodeSyncModal
+        isOpen={showLeetCodeModal}
+        onClose={() => setShowLeetCodeModal(false)}
+        userKey={user?.id || user?.email}
+        onProgressUpdated={updatedProgress => {
+          setUserProgress(updatedProgress);
+        }}
+      />
 
       {/* Auth Modal */}
       {showAuthModal && (

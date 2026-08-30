@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Network, ListOrdered, UploadCloud, ShieldCheck, Sparkles, LogOut, LogIn, User } from 'lucide-react';
+import { Network, ListOrdered, UploadCloud, ShieldCheck, Sparkles, LogOut, LogIn, Code2 } from 'lucide-react';
 import { GraphStats } from '@/lib/types';
 
 interface NavbarProps {
@@ -10,6 +10,7 @@ interface NavbarProps {
   setActiveTab: (tab: 'graph' | 'plan' | 'admin') => void;
   userEmail?: string | null;
   onOpenAuth?: () => void;
+  onOpenLeetCodeSync?: () => void;
   onSignOut?: () => void;
 }
 
@@ -19,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   userEmail,
   onOpenAuth,
+  onOpenLeetCodeSync,
   onSignOut,
 }) => {
   return (
@@ -87,8 +89,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Phase 1 Auth Status Indicator */}
-        <div className="flex items-center gap-3">
+        {/* Action Controls & Auth Status Indicator */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          
+          {/* Sync LeetCode Button */}
+          {onOpenLeetCodeSync && (
+            <button
+              onClick={onOpenLeetCodeSync}
+              title="Sync verified LeetCode Accepted submissions"
+              className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition"
+            >
+              <Code2 className="h-4 w-4" />
+              <span className="hidden md:inline">Sync LeetCode</span>
+            </button>
+          )}
+
           {userEmail ? (
             <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
