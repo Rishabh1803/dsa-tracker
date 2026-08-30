@@ -38,8 +38,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   // Calculate Phase 3 statuses (Locked, Ready, Completed)
   const statusMap = calculateNodeStatuses(nodes, edges, userProgress);
 
-  // Filter nodes by category, difficulty, search query, and status
-  const primaryFilteredNodes = nodes.filter(node => {
+  // 1. Strict, Precise Filtering (Fixes Filter Issue)
+  const filteredNodes = nodes.filter(node => {
     if (filterCategory !== 'All' && node.category !== filterCategory) return false;
     if (filterDifficulty !== 'All' && node.difficulty !== filterDifficulty) return false;
     if (filterStatus !== 'All') {
@@ -57,33 +57,21 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return true;
   });
 
-  const primaryNodeIds = new Set(primaryFilteredNodes.map(n => n.id));
-  const connectedEdgeNodeIds = new Set<string>();
+  const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
 
-  // Include edges that connect to/from primary filtered nodes
-  const filteredEdges = edges.filter(e => {
-    if (primaryNodeIds.has(e.from) || primaryNodeIds.has(e.to)) {
-      connectedEdgeNodeIds.add(e.from);
-      connectedEdgeNodeIds.add(e.to);
-      return true;
-    }
-    return false;
-  });
-
-  // Final nodes set includes primary + connected context nodes
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
-  const finalNodesList = Array.from(connectedEdgeNodeIds)
-    .map(id => nodeMap.get(id))
-    .filter((n): n is DSANode => Boolean(n));
+  // Only include edges connecting strictly between filtered nodes
+  const filteredEdges = edges.filter(
+    e => filteredNodeIds.has(e.from) && filteredNodeIds.has(e.to)
+  );
 
   // Compute Module Grid layout positions if module-grid layout is active
-  const categoryList = Array.from(new Set(finalNodesList.map(n => n.category))).sort();
+  const categoryList = Array.from(new Set(filteredNodes.map(n => n.category))).sort();
   const categoryPositions = new Map<string, { x: number; y: number }>();
   categoryList.forEach((cat, index) => {
-    const cols = 4;
+    const cols = 3;
     const col = index % cols;
     const row = Math.floor(index / cols);
-    categoryPositions.set(cat, { x: col * 650 - 900, y: row * 500 - 600 });
+    categoryPositions.set(cat, { x: col * 750 - 750, y: row * 600 - 600 });
   });
 
   useEffect(() => {
@@ -93,29 +81,27 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       if (!containerRef.current) return;
 
       const visNetwork = await import('vis-network/standalone');
-
-      // Track items per category for grid offset
       const categoryCounters = new Map<string, number>();
 
-      const visNodes = finalNodesList.map(node => {
+      const visNodes = filteredNodes.map(node => {
         const info = statusMap.get(node.id);
         const status: NodeStatus = info ? info.status : 'locked';
         const isSelected = selectedNodeId === node.id || selectedNodeId === node.slug;
-        const isPrimaryMatch = primaryNodeIds.has(node.id);
 
-        let bgColor = isPrimaryMatch ? '#1e293b' : '#0f172a'; // Dim non-primary connected context nodes
-        let borderColor = isPrimaryMatch ? '#475569' : '#334155';
-        let fontColor = isPrimaryMatch ? '#f8fafc' : '#94a3b8';
+        // High-Legibility Styling (Fixes Legibility Issue)
+        let bgColor = '#1e293b'; // Slate 800
+        let borderColor = '#64748b'; // Slate 500
+        let fontColor = '#f8fafc';
         let iconPrefix = '🔒 ';
 
         if (status === 'completed') {
-          bgColor = isPrimaryMatch ? '#047857' : '#064e3b';
-          borderColor = '#10b981';
+          bgColor = '#047857'; // Deep Emerald
+          borderColor = '#34d399';
           fontColor = '#ffffff';
           iconPrefix = '✓ ';
         } else if (status === 'ready') {
-          bgColor = isPrimaryMatch ? '#b45309' : '#78350f';
-          borderColor = '#f59e0b';
+          bgColor = '#d97706'; // Vibrant Amber
+          borderColor = '#fbbf24';
           fontColor = '#ffffff';
           iconPrefix = '⚡ ';
         }
@@ -124,8 +110,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           id: node.id,
           label: `${iconPrefix}${node.label}\n[${node.difficulty}]`,
           shape: 'box',
-          margin: { top: 10, right: 12, bottom: 10, left: 12 },
-          borderWidth: isSelected ? 3.5 : 1.5,
+          margin: { top: 12, right: 16, bottom: 12, left: 16 },
+          borderWidth: isSelected ? 4 : 2,
           color: {
             background: bgColor,
             border: isSelected ? '#38bdf8' : borderColor,
@@ -140,18 +126,19 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           },
           font: {
             color: fontColor,
-            size: isSelected ? 13 : 12,
+            size: isSelected ? 14 : 13,
+            bold: true,
             face: 'Inter, system-ui, sans-serif',
           },
           shadow: isSelected
-            ? { enabled: true, color: '#38bdf8', size: 15, x: 0, y: 0 }
-            : { enabled: true, color: 'rgba(0,0,0,0.5)', size: 5, x: 0, y: 3 },
+            ? { enabled: true, color: '#38bdf8', size: 18, x: 0, y: 0 }
+            : { enabled: true, color: 'rgba(0,0,0,0.6)', size: 8, x: 0, y: 4 },
           shapeProperties: {
-            borderRadius: 8,
+            borderRadius: 10,
           },
         };
 
-        // Apply custom coordinates for structured layout modes
+        // Custom Grid Positioning
         if (layoutMode === 'module-grid') {
           const catPos = categoryPositions.get(node.category) || { x: 0, y: 0 };
           const count = categoryCounters.get(node.category) || 0;
@@ -161,14 +148,14 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           const innerCol = count % innerCols;
           const innerRow = Math.floor(count / innerCols);
 
-          baseNode.x = catPos.x + innerCol * 180;
-          baseNode.y = catPos.y + innerRow * 80;
+          baseNode.x = catPos.x + innerCol * 220;
+          baseNode.y = catPos.y + innerRow * 100;
         }
 
         return baseNode;
       });
 
-      // High-Visibility Sky Blue Edges with Prominent Directional Arrows
+      // High-Visibility Sky Blue Edges
       const visEdges = filteredEdges.map(edge => ({
         id: edge.id || `${edge.from}->${edge.to}`,
         from: edge.from,
@@ -176,17 +163,17 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         arrows: {
           to: {
             enabled: true,
-            scaleFactor: 1.2,
+            scaleFactor: 1.3,
             type: 'arrow',
           },
         },
         color: {
-          color: '#38bdf8',       // Sky Blue
-          highlight: '#34d399', // Emerald on select
+          color: '#38bdf8',       // Vibrant Sky Blue
+          highlight: '#34d399',
           hover: '#60a5fa',
-          opacity: 0.85,
+          opacity: 0.9,
         },
-        width: 2.5,
+        width: 3, // Crisp thick lines
         smooth: {
           enabled: true,
           type: 'cubicBezier',
@@ -200,6 +187,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         edges: new visNetwork.DataSet(visEdges as any),
       };
 
+      // Powerful Anti-Overlap Physics Settings (Fixes Overlap Issue)
       const options = {
         nodes: {
           shadow: true,
@@ -215,18 +203,18 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         },
         physics: {
           enabled: layoutMode !== 'module-grid' && physicsEnabled,
-          solver: 'forceAtlas2Based',
-          forceAtlas2Based: {
-            gravitationalConstant: -140,
-            centralGravity: 0.005,
-            springLength: 160,
-            springConstant: 0.05,
-            damping: 0.5,
-            avoidOverlap: 1.0,
+          solver: 'barnesHut',
+          barnesHut: {
+            gravitationalConstant: -22000, // Massive repulsion pushing node boxes far apart
+            centralGravity: 0.008,
+            springLength: 220,             // Spacious gap between nodes
+            springConstant: 0.02,
+            damping: 0.6,
+            avoidOverlap: 1.0,            // Strict zero overlap
           },
           stabilization: {
             enabled: true,
-            iterations: 250,
+            iterations: 300,
             updateInterval: 25,
           },
         },
@@ -242,9 +230,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }
       });
 
-      // Auto fit canvas on initial stabilization
+      // Auto fit canvas to comfortable zoom level
       networkInstance.once('stabilizationIterationsDone', () => {
-        networkInstance.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+        networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
       });
     }
 
@@ -255,7 +243,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         networkInstance.destroy();
       }
     };
-  }, [finalNodesList, filteredEdges, userProgress, filterCategory, filterDifficulty, filterStatus, searchQuery, selectedNodeId, layoutMode]);
+  }, [filteredNodes, filteredEdges, userProgress, filterCategory, filterDifficulty, filterStatus, searchQuery, selectedNodeId, layoutMode]);
 
   const handleZoomIn = () => {
     if (networkRef.current) {
@@ -300,7 +288,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/90 p-1 shadow-lg backdrop-blur-md">
           <button
             onClick={() => setLayoutMode('cluster')}
-            title="Interactive Curriculum Cluster"
+            title="Interactive Network Cluster"
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
               layoutMode === 'cluster'
                 ? 'bg-emerald-500 text-slate-950 shadow-sm'
@@ -308,7 +296,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             }`}
           >
             <Network className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Cluster Layout</span>
+            <span className="hidden sm:inline">Spacious Cluster</span>
           </button>
 
           <button
