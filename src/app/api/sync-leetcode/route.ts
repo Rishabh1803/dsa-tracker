@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: `LeetCode API returned status ${response.status}. Please verify the username.` },
+        { error: `LeetCode API returned status ${response.status}. Please verify your LeetCode username.` },
         { status: 502 }
       );
     }
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const acceptedSlugs = new Set<string>();
     submissions.forEach((sub: any) => {
       if (sub.titleSlug) {
-        acceptedSlugs.add(sub.titleSlug.toLowerCase());
+        acceptedSlugs.add(sub.titleSlug.toLowerCase().trim());
       }
     });
 
@@ -74,8 +74,19 @@ export async function POST(request: Request) {
     const matchedSlugs: string[] = [];
 
     seedNodes.forEach(node => {
-      const nodeSlugLower = node.slug.toLowerCase();
-      if (acceptedSlugs.has(nodeSlugLower)) {
+      // 1. Extract exact titleSlug from LeetCode URL (e.g., https://leetcode.com/problems/running-sum-of-1d-array/)
+      let urlSlug = '';
+      if (node.url && node.url.includes('/problems/')) {
+        const parts = node.url.split('/problems/')[1];
+        if (parts) {
+          urlSlug = parts.split('/')[0].toLowerCase().trim();
+        }
+      }
+
+      const nodeSlugLower = node.slug.toLowerCase().trim();
+
+      // Check if LeetCode accepted submissions set contains either the URL slug or node slug
+      if (acceptedSlugs.has(urlSlug) || acceptedSlugs.has(nodeSlugLower)) {
         matchedNodeIds.push(node.id);
         matchedSlugs.push(node.slug);
       }
