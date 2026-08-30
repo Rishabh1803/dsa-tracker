@@ -334,6 +334,10 @@ export default function Home() {
                   nodes={nodes}
                   edges={edges}
                   userProgress={userProgress}
+                  filterCategory={selectedCategory}
+                  filterDifficulty={selectedDifficulty}
+                  filterStatus={selectedStatus}
+                  searchQuery={searchQuery}
                   onToggleCompletion={handleToggleCompletion}
                   onSelectNode={id => {
                     setSelectedNodeId(id);
