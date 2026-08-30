@@ -31,6 +31,7 @@ export default function Home() {
   // Filters State
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Node Inspector Drawer State
@@ -183,7 +184,6 @@ export default function Home() {
       return;
     }
 
-    // 1. Supabase Auth Mode (Enforces Real Authentication)
     if (isSupabaseConfigured && supabase) {
       try {
         if (authMode === 'signup') {
@@ -197,7 +197,6 @@ export default function Home() {
             return;
           }
           if (data.user) {
-            // Check if email confirmation is required
             if (data.session) {
               const u = { id: data.user.id, email: data.user.email };
               setUser(u);
@@ -231,7 +230,6 @@ export default function Home() {
       return;
     }
 
-    // 2. Offline / Local Demo Auth (Only used if Supabase environment variables are missing)
     const localUser = { id: email.toLowerCase().trim(), email: email.toLowerCase().trim() };
     setUser(localUser);
     if (typeof window !== 'undefined') {
@@ -259,6 +257,7 @@ export default function Home() {
   const resetFilters = () => {
     setSelectedCategory('All');
     setSelectedDifficulty('All');
+    setSelectedStatus('All');
     setSearchQuery('');
   };
 
@@ -283,7 +282,7 @@ export default function Home() {
       />
 
       {/* Main App Canvas / Tab Views */}
-      <main className="flex flex-1 overflow-hidden p-4 gap-4">
+      <main className="flex flex-1 overflow-hidden p-3 sm:p-4 gap-4">
         
         {loading ? (
           <div className="flex h-full w-full items-center justify-center">
@@ -293,7 +292,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-1 flex-col overflow-hidden gap-4">
+          <div className="flex flex-1 flex-col overflow-hidden gap-3 sm:gap-4">
             
             {/* Filter Controls */}
             {activeTab !== 'admin' && (
@@ -303,6 +302,8 @@ export default function Home() {
                 setSelectedCategory={setSelectedCategory}
                 selectedDifficulty={selectedDifficulty}
                 setSelectedDifficulty={setSelectedDifficulty}
+                selectedStatus={selectedStatus}
+                setSelectedStatus={setSelectedStatus}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 onReset={resetFilters}
@@ -320,6 +321,7 @@ export default function Home() {
                   selectedNodeId={selectedNodeId}
                   filterCategory={selectedCategory}
                   filterDifficulty={selectedDifficulty}
+                  filterStatus={selectedStatus}
                   searchQuery={searchQuery}
                 />
               </div>

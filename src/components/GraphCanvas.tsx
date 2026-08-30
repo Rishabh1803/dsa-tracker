@@ -13,10 +13,11 @@ interface GraphCanvasProps {
   selectedNodeId?: string | null;
   filterCategory?: string;
   filterDifficulty?: string;
+  filterStatus?: string;
   searchQuery?: string;
 }
 
-export type LayoutMode = 'cluster' | 'module-grid' | 'dependency-flow';
+export type LayoutMode = 'cluster' | 'module-grid';
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   nodes,
@@ -26,6 +27,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   selectedNodeId,
   filterCategory = 'All',
   filterDifficulty = 'All',
+  filterStatus = 'All',
   searchQuery = '',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,10 +38,14 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   // Calculate Phase 3 statuses (Locked, Ready, Completed)
   const statusMap = calculateNodeStatuses(nodes, edges, userProgress);
 
-  // Filter nodes & include connecting edge endpoints so connections are never cut off
+  // Filter nodes by category, difficulty, search query, and status
   const primaryFilteredNodes = nodes.filter(node => {
     if (filterCategory !== 'All' && node.category !== filterCategory) return false;
     if (filterDifficulty !== 'All' && node.difficulty !== filterDifficulty) return false;
+    if (filterStatus !== 'All') {
+      const info = statusMap.get(node.id);
+      if (info?.status !== filterStatus) return false;
+    }
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       return (
@@ -80,15 +86,6 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     categoryPositions.set(cat, { x: col * 650 - 900, y: row * 500 - 600 });
   });
 
-  // Compute Dependency Depth for dependency-flow layout
-  const inDegreeMap = new Map<string, number>();
-  finalNodesList.forEach(n => inDegreeMap.set(n.id, 0));
-  filteredEdges.forEach(e => {
-    if (inDegreeMap.has(e.to)) {
-      inDegreeMap.set(e.to, (inDegreeMap.get(e.to) || 0) + 1);
-    }
-  });
-
   useEffect(() => {
     let networkInstance: any = null;
 
@@ -106,7 +103,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         const isSelected = selectedNodeId === node.id || selectedNodeId === node.slug;
         const isPrimaryMatch = primaryNodeIds.has(node.id);
 
-        let bgColor = isPrimaryMatch ? '#1e293b' : '#0f172a'; // Dim non-primary connected nodes
+        let bgColor = isPrimaryMatch ? '#1e293b' : '#0f172a'; // Dim non-primary connected context nodes
         let borderColor = isPrimaryMatch ? '#475569' : '#334155';
         let fontColor = isPrimaryMatch ? '#f8fafc' : '#94a3b8';
         let iconPrefix = '🔒 ';
@@ -171,7 +168,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         return baseNode;
       });
 
-      // Bright, Vibrant, High-Visibility Edges
+      // High-Visibility Sky Blue Edges with Prominent Directional Arrows
       const visEdges = filteredEdges.map(edge => ({
         id: edge.id || `${edge.from}->${edge.to}`,
         from: edge.from,
@@ -179,17 +176,17 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         arrows: {
           to: {
             enabled: true,
-            scaleFactor: 1.2, // Prominent directional arrows
+            scaleFactor: 1.2,
             type: 'arrow',
           },
         },
         color: {
-          color: '#38bdf8',       // High-contrast Sky Blue
-          highlight: '#34d399', // Glowing Emerald on select
+          color: '#38bdf8',       // Sky Blue
+          highlight: '#34d399', // Emerald on select
           hover: '#60a5fa',
           opacity: 0.85,
         },
-        width: 2.5, // Thicker, clearly visible lines
+        width: 2.5,
         smooth: {
           enabled: true,
           type: 'cubicBezier',
@@ -220,12 +217,12 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           enabled: layoutMode !== 'module-grid' && physicsEnabled,
           solver: 'forceAtlas2Based',
           forceAtlas2Based: {
-            gravitationalConstant: -140, // Balanced cluster repulsion
+            gravitationalConstant: -140,
             centralGravity: 0.005,
-            springLength: 160,          // Clean spacing between connected topics
+            springLength: 160,
             springConstant: 0.05,
             damping: 0.5,
-            avoidOverlap: 1.0,          // Guaranteed zero node overlapping
+            avoidOverlap: 1.0,
           },
           stabilization: {
             enabled: true,
@@ -258,7 +255,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         networkInstance.destroy();
       }
     };
-  }, [finalNodesList, filteredEdges, userProgress, filterCategory, filterDifficulty, searchQuery, selectedNodeId, layoutMode]);
+  }, [finalNodesList, filteredEdges, userProgress, filterCategory, filterDifficulty, filterStatus, searchQuery, selectedNodeId, layoutMode]);
 
   const handleZoomIn = () => {
     if (networkRef.current) {

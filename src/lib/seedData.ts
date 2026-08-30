@@ -272,6 +272,13 @@ const rawSeedEdges = [
   { from: "subarray-sum-k", to: "subarray-div-k" },
   { from: "stock-1", to: "stock-ii" },
 
+  // Cross-Module Foundation Dependencies: Arrays -> Sliding Window / DP
+  { from: "running-sum", to: "longest-substr-no-repeat" },
+  { from: "two-sum", to: "valid-palindrome" },
+  { from: "max-subarray", to: "fibonacci-number" },
+  { from: "binary-search", to: "tree-preorder" },
+  { from: "tree-level-order", to: "graph-bfs-traversal" },
+
   // Maps / Windows
   { from: "contains-duplicate", to: "longest-consec-seq" },
   { from: "valid-anagram", to: "find-all-anagrams" },

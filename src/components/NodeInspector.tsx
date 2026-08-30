@@ -48,7 +48,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
   const dependentEdges = edges.filter(e => e.from === node.id);
   const dependentNodes = dependentEdges.map(e => nodeMap.get(e.to)).filter((n): n is DSANode => Boolean(n));
 
-  const diffColors = {
+  const diffColors: Record<string, string> = {
     Easy: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
     Medium: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
     Hard: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
@@ -86,7 +86,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
           
           {/* Difficulty & Status Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${diffColors[node.difficulty]}`}>
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${diffColors[node.difficulty] || 'bg-slate-800 text-slate-300'}`}>
               {node.difficulty}
             </span>
 
@@ -123,19 +123,35 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
             </a>
           </div>
 
-          {/* Action Button: Toggle Completion */}
+          {/* Action Button: Strictly Enforce Prerequisites Locking */}
           <div>
-            <button
-              onClick={() => onToggleCompletion(node.id, isCompleted)}
-              className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs sm:text-sm font-bold shadow-lg transition-all ${
-                isCompleted
-                  ? 'border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                  : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:from-emerald-400 hover:to-teal-400 shadow-emerald-500/20'
-              }`}
-            >
-              <CheckCircle2 className="h-5 w-5" />
-              <span>{isCompleted ? 'Mark as Incomplete' : 'Mark as Completed'}</span>
-            </button>
+            {isLocked ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+                  <Lock className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                  <span>This topic is <strong>Locked 🔒</strong>. You must complete all required prerequisite topics below before unlocking this problem!</span>
+                </div>
+                <button
+                  disabled
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 py-3 text-xs sm:text-sm font-bold text-slate-600 cursor-not-allowed opacity-60"
+                >
+                  <Lock className="h-4 w-4" />
+                  <span>Locked (Prerequisites Pending)</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => onToggleCompletion(node.id, isCompleted)}
+                className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs sm:text-sm font-bold shadow-lg transition-all ${
+                  isCompleted
+                    ? 'border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:from-emerald-400 hover:to-teal-400 shadow-emerald-500/20'
+                }`}
+              >
+                <CheckCircle2 className="h-5 w-5" />
+                <span>{isCompleted ? 'Mark as Incomplete' : 'Mark as Completed'}</span>
+              </button>
+            )}
           </div>
 
           {/* Prerequisites Checklist */}
