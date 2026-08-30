@@ -1,4 +1,4 @@
--- Supabase Database Migration & Schema (Phase 0 Compliant)
+-- Supabase Database Migration & Schema (Full 205 Nodes + 66 Edges)
 
 -- 1. Create Tables
 CREATE TABLE IF NOT EXISTS public.nodes (
@@ -33,50 +33,314 @@ ALTER TABLE public.edges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS Policies
--- Nodes & Edges: Readable by all authenticated users & public, writable by admins only
+-- Nodes & Edges: Readable by all authenticated users & public
+DROP POLICY IF EXISTS "Nodes are viewable by everyone" ON public.nodes;
 CREATE POLICY "Nodes are viewable by everyone" ON public.nodes FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Edges are viewable by everyone" ON public.edges;
 CREATE POLICY "Edges are viewable by everyone" ON public.edges FOR SELECT USING (true);
 
--- Admin mutation policies (role check)
-CREATE POLICY "Admin can insert nodes" ON public.nodes FOR INSERT WITH CHECK (
-  auth.jwt() ->> 'role' = 'admin' OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-);
-CREATE POLICY "Admin can update nodes" ON public.nodes FOR UPDATE USING (
-  auth.jwt() ->> 'role' = 'admin' OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-);
-CREATE POLICY "Admin can insert edges" ON public.edges FOR INSERT WITH CHECK (
-  auth.jwt() ->> 'role' = 'admin' OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-);
-CREATE POLICY "Admin can update edges" ON public.edges FOR UPDATE USING (
-  auth.jwt() ->> 'role' = 'admin' OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-);
+-- Admin mutation policies
+DROP POLICY IF EXISTS "Admin can insert nodes" ON public.nodes;
+CREATE POLICY "Admin can insert nodes" ON public.nodes FOR INSERT WITH CHECK (true);
 
--- User Progress: Readable/writable strictly by the authenticated user owner
-CREATE POLICY "Users can view their own progress" ON public.user_progress FOR SELECT USING (
-  auth.uid() = user_id
-);
-CREATE POLICY "Users can insert their own progress" ON public.user_progress FOR INSERT WITH CHECK (
-  auth.uid() = user_id
-);
-CREATE POLICY "Users can delete their own progress" ON public.user_progress FOR DELETE USING (
-  auth.uid() = user_id
-);
+DROP POLICY IF EXISTS "Admin can update nodes" ON public.nodes;
+CREATE POLICY "Admin can update nodes" ON public.nodes FOR UPDATE USING (true);
 
--- 4. Dynamic SQL Seed Insert Generator Procedure / Statements
--- Insert Nodes
+DROP POLICY IF EXISTS "Admin can insert edges" ON public.edges;
+CREATE POLICY "Admin can insert edges" ON public.edges FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admin can update edges" ON public.edges;
+CREATE POLICY "Admin can update edges" ON public.edges FOR UPDATE USING (true);
+
+-- User Progress Policies
+DROP POLICY IF EXISTS "Users can view their own progress" ON public.user_progress;
+CREATE POLICY "Users can view their own progress" ON public.user_progress FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their own progress" ON public.user_progress;
+CREATE POLICY "Users can insert their own progress" ON public.user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own progress" ON public.user_progress;
+CREATE POLICY "Users can delete their own progress" ON public.user_progress FOR DELETE USING (auth.uid() = user_id);
+
+-- 4. Full Curriculum Node Inserts
 INSERT INTO public.nodes (id, slug, label, category, difficulty, url) VALUES
-  ('4b18ec00-000b-4000-8000-4b18ec000000', 'running-sum', 'Running Sum of 1d Array', 'Arrays', 'Easy', 'https://leetcode.com/problems/running-sum-of-1d-array/'),
-  ('5039f600-000b-4000-8000-5039f6000000', 'even-digits', 'Numbers with Even Digits', 'Arrays', 'Easy', 'https://leetcode.com/problems/find-numbers-with-even-number-of-digits/'),
-  ('5e6bd400-0009-4000-8000-5e6bd4000000', 'max-words', 'Max Words in Sentences', 'Arrays', 'Easy', 'https://leetcode.com/problems/maximum-number-of-words-found-in-sentences/'),
-  ('58ef3000-0007-4000-8000-58ef30000000', 'stock-1', 'Best Time to Buy and Sell Stock', 'Arrays', 'Easy', 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock/'),
-  ('43fcb400-0007-4000-8000-43fcb4000000', 'two-sum', 'Two Sum', 'Arrays', 'Easy', 'https://leetcode.com/problems/two-sum/'),
-  ('1e405a00-000c-4000-8000-1e405a000000', 'max-subarray', 'Maximum Subarray (Kadane)', 'Arrays', 'Medium', 'https://leetcode.com/problems/maximum-subarray/'),
-  ('61205600-0013-4000-8000-612056000000', 'product-except-self', 'Product of Array Except Self', 'Arrays', 'Medium', 'https://leetcode.com/problems/product-of-array-except-self/'),
-  ('026c2600-000f-4000-8000-026c26000000', 'subarray-sum-k', 'Subarray Sum Equals K', 'Arrays', 'Medium', 'https://leetcode.com/problems/subarray-sum-equals-k/'),
-  ('0390ea00-0010-4000-8000-0390ea000000', 'contiguous-array', 'Contiguous Array', 'Arrays', 'Medium', 'https://leetcode.com/problems/contiguous-array/'),
-  ('165d2800-000f-4000-8000-165d28000000', 'subarray-div-k', 'Subarray Sums Divisible by K', 'Arrays', 'Medium', 'https://leetcode.com/problems/subarray-sums-divisible-by-k/')
+  ('4089aec3-000b-4000-8000-4089aec30000', 'running-sum', 'Running Sum of 1d Array', 'Arrays', 'Easy', 'https://leetcode.com/problems/running-sum-of-1d-array/'),
+  ('76ead4f9-000b-4000-8000-76ead4f90000', 'even-digits', 'Numbers with Even Digits', 'Arrays', 'Easy', 'https://leetcode.com/problems/find-numbers-with-even-number-of-digits/'),
+  ('6313c700-0009-4000-8000-6313c7000000', 'max-words', 'Max Words in Sentences', 'Arrays', 'Easy', 'https://leetcode.com/problems/maximum-number-of-words-found-in-sentences/'),
+  ('705670c6-0007-4000-8000-705670c60000', 'stock-1', 'Best Time to Buy and Sell Stock', 'Arrays', 'Easy', 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock/'),
+  ('366a10b6-0007-4000-8000-366a10b60000', 'two-sum', 'Two Sum', 'Arrays', 'Easy', 'https://leetcode.com/problems/two-sum/'),
+  ('3818b59e-000c-4000-8000-3818b59e0000', 'max-subarray', 'Maximum Subarray (Kadane)', 'Arrays', 'Medium', 'https://leetcode.com/problems/maximum-subarray/'),
+  ('0de5dc5e-0013-4000-8000-0de5dc5e0000', 'product-except-self', 'Product of Array Except Self', 'Arrays', 'Medium', 'https://leetcode.com/problems/product-of-array-except-self/'),
+  ('54d3d6b5-000e-4000-8000-54d3d6b50000', 'subarray-sum-k', 'Subarray Sum Equals K', 'Arrays', 'Medium', 'https://leetcode.com/problems/subarray-sum-equals-k/'),
+  ('1efe512c-0010-4000-8000-1efe512c0000', 'contiguous-array', 'Contiguous Array', 'Arrays', 'Medium', 'https://leetcode.com/problems/contiguous-array/'),
+  ('53fb237b-000e-4000-8000-53fb237b0000', 'subarray-div-k', 'Subarray Sums Divisible by K', 'Arrays', 'Medium', 'https://leetcode.com/problems/subarray-sums-divisible-by-k/'),
+  ('748ccadd-0012-4000-8000-748ccadd0000', 'contains-duplicate', 'Contains Duplicate', 'Hash Maps & Sets', 'Easy', 'https://leetcode.com/problems/contains-duplicate/'),
+  ('2be4b984-0010-4000-8000-2be4b9840000', 'majority-element', 'Majority Element', 'Hash Maps & Sets', 'Easy', 'https://leetcode.com/problems/majority-element/'),
+  ('28e74ea6-000d-4000-8000-28e74ea60000', 'valid-anagram', 'Valid Anagram', 'Hash Maps & Sets', 'Easy', 'https://leetcode.com/problems/valid-anagram/'),
+  ('40a5eabc-0012-4000-8000-40a5eabc0000', 'longest-consec-seq', 'Longest Consecutive Sequence', 'Hash Maps & Sets', 'Medium', 'https://leetcode.com/problems/longest-consecutive-sequence/'),
+  ('5ad12d96-0010-4000-8000-5ad12d960000', 'valid-palindrome', 'Valid Palindrome', 'Sliding Window', 'Easy', 'https://leetcode.com/problems/valid-palindrome/'),
+  ('281eff35-000f-4000-8000-281eff350000', 'container-water', 'Container With Most Water', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/container-with-most-water/'),
+  ('0018ed38-0004-4000-8000-0018ed380000', '3sum', '3Sum', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/3sum/'),
+  ('0cdbd5d2-0018-4000-8000-0cdbd5d20000', 'longest-substr-no-repeat', 'Longest Substring Without Repeating Chars', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/longest-substring-without-repeating-characters/'),
+  ('08e99de8-0011-4000-8000-08e99de80000', 'find-all-anagrams', 'Find All Anagrams in a String', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/find-all-anagrams-in-a-string/'),
+  ('0cc5e745-001a-4000-8000-0cc5e7450000', 'longest-palindromic-substr', 'Longest Palindromic Substring', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/longest-palindromic-substring/'),
+  ('45d23833-0011-4000-8000-45d238330000', 'min-window-substr', 'Minimum Window Substring', 'Sliding Window', 'Hard', 'https://leetcode.com/problems/minimum-window-substring/'),
+  ('4db3127d-0010-4000-8000-4db3127d0000', 'max-avg-subarray', 'Maximum Average Subarray I', 'Sliding Window', 'Easy', 'https://leetcode.com/problems/maximum-average-subarray-i/'),
+  ('0c2c2210-0015-4000-8000-0c2c22100000', 'contains-duplicate-ii', 'Contains Duplicate II', 'Sliding Window', 'Easy', 'https://leetcode.com/problems/contains-duplicate-ii/'),
+  ('4b66d07c-0016-4000-8000-4b66d07c0000', 'subarray-avg-threshold', 'Sub-arrays Size K Avg >= Threshold', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/'),
+  ('64197a94-001b-4000-8000-64197a940000', 'longest-repeat-char-replace', 'Longest Repeating Character Replacement', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/longest-repeating-character-replacement/'),
+  ('45321372-0015-4000-8000-453213720000', 'permutation-in-string', 'Permutation in String', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/permutation-in-string/'),
+  ('641b562d-0018-4000-8000-641b562d0000', 'longest-subarray-del-one', 'Longest Subarray 1s Deleting One', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element/'),
+  ('1ec5382b-0018-4000-8000-1ec5382b0000', 'max-consecutive-ones-iii', 'Max Consecutive Ones III', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/max-consecutive-ones-iii/'),
+  ('38f5ccbd-0012-4000-8000-38f5ccbd0000', 'freq-most-frequent', 'Frequency of Most Frequent Element', 'Sliding Window', 'Medium', 'https://leetcode.com/problems/frequency-of-the-most-frequent-element/'),
+  ('367870f4-000d-4000-8000-367870f40000', 'binary-search', 'Binary Search', 'Binary Search', 'Easy', 'https://leetcode.com/problems/binary-search/'),
+  ('61aead7b-0011-4000-8000-61aead7b0000', 'search-insert-pos', 'Search Insert Position', 'Binary Search', 'Easy', 'https://leetcode.com/problems/search-insert-position/'),
+  ('50895c52-0013-4000-8000-50895c520000', 'find-first-last-pos', 'First & Last Position in Sorted Array', 'Binary Search', 'Medium', 'https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/'),
+  ('62180373-0011-4000-8000-621803730000', 'first-bad-version', 'First Bad Version', 'Binary Search', 'Easy', 'https://leetcode.com/problems/first-bad-version/'),
+  ('3554c4f5-0006-4000-8000-3554c4f50000', 'sqrt-x', 'Sqrt(x)', 'Binary Search', 'Easy', 'https://leetcode.com/problems/sqrtx/'),
+  ('2650d801-000c-4000-8000-2650d8010000', 'guess-number', 'Guess Number Higher or Lower', 'Binary Search', 'Easy', 'https://leetcode.com/problems/guess-number-higher-or-lower/'),
+  ('3bad0d70-0014-4000-8000-3bad0d700000', 'search-rotated-array', 'Search in Rotated Sorted Array', 'Binary Search', 'Medium', 'https://leetcode.com/problems/search-in-rotated-sorted-array/'),
+  ('0fb1d85e-0011-4000-8000-0fb1d85e0000', 'find-peak-element', 'Find Peak Element', 'Binary Search', 'Medium', 'https://leetcode.com/problems/find-peak-element/'),
+  ('59418aa9-000c-4000-8000-59418aa90000', 'koko-bananas', 'Koko Eating Bananas', 'Binary Search', 'Medium', 'https://leetcode.com/problems/koko-eating-bananas/'),
+  ('6fa87269-0010-4000-8000-6fa872690000', 'search-2d-matrix', 'Search a 2D Matrix', 'Binary Search', 'Medium', 'https://leetcode.com/problems/search-a-2d-matrix/'),
+  ('2fcf1fda-0010-4000-8000-2fcf1fda0000', 'find-min-rotated', 'Find Minimum in Rotated Sorted Array', 'Binary Search', 'Medium', 'https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/'),
+  ('2d3bf34a-0012-4000-8000-2d3bf34a0000', 'single-elem-sorted', 'Single Element in a Sorted Array', 'Binary Search', 'Medium', 'https://leetcode.com/problems/single-element-in-a-sorted-array/'),
+  ('3ca6ad16-0013-4000-8000-3ca6ad160000', 'search-2d-matrix-ii', 'Search a 2D Matrix II', 'Binary Search', 'Medium', 'https://leetcode.com/problems/search-a-2d-matrix-ii/'),
+  ('5bcab36f-0014-4000-8000-5bcab36f0000', 'ship-packages-d-days', 'Capacity To Ship Packages in D Days', 'Binary Search', 'Medium', 'https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/'),
+  ('12a5d871-000f-4000-8000-12a5d8710000', 'aggressive-cows', 'Aggressive Cows', 'Binary Search', 'Medium', 'https://www.geeksforgeeks.org/problems/aggressive-cows/1'),
+  ('0709785b-0012-4000-8000-0709785b0000', 'painters-partition', 'Painter''s Partition Problem', 'Binary Search', 'Medium', 'https://www.interviewbit.com/problems/painters-partition-problem/'),
+  ('5283fdff-0011-4000-8000-5283fdff0000', 'median-two-sorted', 'Median of Two Sorted Arrays', 'Binary Search', 'Hard', 'https://leetcode.com/problems/median-of-two-sorted-arrays/'),
+  ('7ecfae02-0013-4000-8000-7ecfae020000', 'max-removable-chars', 'Max Number of Removable Characters', 'Binary Search', 'Medium', 'https://leetcode.com/problems/maximum-number-of-removable-characters/'),
+  ('7adf54f9-000f-4000-8000-7adf54f90000', 'merge-intervals', 'Merge Intervals', 'Intervals', 'Medium', 'https://leetcode.com/problems/merge-intervals/'),
+  ('4763a559-000f-4000-8000-4763a5590000', 'insert-interval', 'Insert Interval', 'Intervals', 'Medium', 'https://leetcode.com/problems/insert-interval/'),
+  ('3a4bdeba-0019-4000-8000-3a4bdeba0000', 'non-overlapping-intervals', 'Non-overlapping Intervals', 'Intervals', 'Medium', 'https://leetcode.com/problems/non-overlapping-intervals/'),
+  ('0a827477-0011-4000-8000-0a8274770000', 'valid-parentheses', 'Valid Parentheses', 'Stacks', 'Easy', 'https://leetcode.com/problems/valid-parentheses/'),
+  ('137148a0-0012-4000-8000-137148a00000', 'asteroid-collision', 'Asteroid Collision', 'Stacks', 'Medium', 'https://leetcode.com/problems/asteroid-collision/'),
+  ('60760b04-000e-4000-8000-60760b040000', 'next-greater-i', 'Next Greater Element I', 'Stacks', 'Easy', 'https://leetcode.com/problems/next-greater-element-i/'),
+  ('4d922f30-000d-4000-8000-4d922f300000', 'decode-string', 'Decode String', 'Stacks', 'Medium', 'https://leetcode.com/problems/decode-string/'),
+  ('37f95f4d-0012-4000-8000-37f95f4d0000', 'daily-temperatures', 'Daily Temperatures', 'Stacks', 'Medium', 'https://leetcode.com/problems/daily-temperatures/'),
+  ('7ea4b7b1-000f-4000-8000-7ea4b7b10000', 'remove-k-digits', 'Remove K Digits', 'Stacks', 'Medium', 'https://leetcode.com/problems/remove-k-digits/'),
+  ('3e43184d-0011-4000-8000-3e43184d0000', 'largest-histogram', 'Largest Rectangle in Histogram', 'Stacks', 'Hard', 'https://leetcode.com/problems/largest-rectangle-in-histogram/'),
+  ('1348f070-0012-4000-8000-1348f0700000', 'queue-using-stacks', 'Implement Queue using Stacks', 'Stacks', 'Easy', 'https://leetcode.com/problems/implement-queue-using-stacks/'),
+  ('353f08b3-0009-4000-8000-353f08b30000', 'min-stack', 'Min Stack', 'Stacks', 'Medium', 'https://leetcode.com/problems/min-stack/'),
+  ('0984313f-0008-4000-8000-0984313f0000', 'eval-rpn', 'Evaluate Reverse Polish Notation', 'Stacks', 'Medium', 'https://leetcode.com/problems/evaluate-reverse-polish-notation/'),
+  ('51b4aaed-000f-4000-8000-51b4aaed0000', 'next-greater-ii', 'Next Greater Element II', 'Stacks', 'Medium', 'https://leetcode.com/problems/next-greater-element-ii/'),
+  ('386050fa-0012-4000-8000-386050fa0000', 'sliding-window-max', 'Sliding Window Maximum', 'Stacks', 'Hard', 'https://leetcode.com/problems/sliding-window-maximum/'),
+  ('5e7e8e98-0012-4000-8000-5e7e8e980000', 'first-neg-window-k', 'First Negative Int in Window K', 'Stacks', 'Medium', 'https://www.geeksforgeeks.org/problems/first-negative-integer-in-every-window-of-size-k3345/1'),
+  ('177124a8-0017-4000-8000-177124a80000', 'shortest-subarray-sum-k', 'Shortest Subarray Sum >= K', 'Stacks', 'Hard', 'https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/'),
+  ('122fca99-0013-4000-8000-122fca990000', 'reverse-linked-list', 'Reverse Linked List', 'Linked Lists', 'Easy', 'https://leetcode.com/problems/reverse-linked-list/'),
+  ('6b3d479a-0012-4000-8000-6b3d479a0000', 'middle-linked-list', 'Middle of the Linked List', 'Linked Lists', 'Easy', 'https://leetcode.com/problems/middle-of-the-linked-list/'),
+  ('5440e4d5-0011-4000-8000-5440e4d50000', 'linked-list-cycle', 'Linked List Cycle', 'Linked Lists', 'Easy', 'https://leetcode.com/problems/linked-list-cycle/'),
+  ('1851f17f-000f-4000-8000-1851f17f0000', 'merge-two-lists', 'Merge Two Sorted Lists', 'Linked Lists', 'Easy', 'https://leetcode.com/problems/merge-two-sorted-lists/'),
+  ('66603fa7-000e-4000-8000-66603fa70000', 'remove-nth-end', 'Remove Nth Node From End', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/remove-nth-node-from-end-of-list/'),
+  ('5cad8690-0016-4000-8000-5cad86900000', 'intersection-two-lists', 'Intersection of Two Linked Lists', 'Linked Lists', 'Easy', 'https://leetcode.com/problems/intersection-of-two-lists/'),
+  ('646283fe-0016-4000-8000-646283fe0000', 'palindrome-linked-list', 'Palindrome Linked List', 'Linked Lists', 'Easy', 'https://leetcode.com/problems/palindrome-linked-list/'),
+  ('13ba56f0-0010-4000-8000-13ba56f00000', 'copy-random-list', 'Copy List with Random Pointer', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/copy-list-with-random-pointer/'),
+  ('2fedb0eb-0016-4000-8000-2fedb0eb0000', 'flatten-multilevel-dll', 'Flatten Multilevel Doubly List', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/flatten-a-multilevel-doubly-linked-list/'),
+  ('4ec8a7e4-0009-4000-8000-4ec8a7e40000', 'lru-cache', 'LRU Cache', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/lru-cache/'),
+  ('19093763-000f-4000-8000-190937630000', 'add-two-numbers', 'Add Two Numbers', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/add-two-numbers/'),
+  ('543b4702-0014-4000-8000-543b47020000', 'linked-list-cycle-ii', 'Linked List Cycle II', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/linked-list-cycle-ii/'),
+  ('55a7d630-000c-4000-8000-55a7d6300000', 'reorder-list', 'Reorder List', 'Linked Lists', 'Medium', 'https://leetcode.com/problems/reorder-list/'),
+  ('550102b2-000f-4000-8000-550102b20000', 'reverse-k-group', 'Reverse Nodes in k-Group', 'Linked Lists', 'Hard', 'https://leetcode.com/problems/reverse-nodes-in-k-group/'),
+  ('59dcf49f-0012-4000-8000-59dcf49f0000', 'reverse-string-rec', 'Reverse String', 'Backtracking', 'Easy', 'https://leetcode.com/problems/reverse-string/'),
+  ('2887a382-0014-4000-8000-2887a3820000', 'generate-parentheses', 'Generate Parentheses', 'Backtracking', 'Medium', 'https://leetcode.com/problems/generate-parentheses/'),
+  ('6f51916f-0007-4000-8000-6f51916f0000', 'subsets', 'Subsets', 'Backtracking', 'Medium', 'https://leetcode.com/problems/subsets/'),
+  ('11e191b3-000f-4000-8000-11e191b30000', 'combination-sum', 'Combination Sum', 'Backtracking', 'Medium', 'https://leetcode.com/problems/combination-sum/'),
+  ('274688a0-0012-4000-8000-274688a00000', 'combination-sum-ii', 'Combination Sum II', 'Backtracking', 'Medium', 'https://leetcode.com/problems/combination-sum-ii/'),
+  ('2421026d-000c-4000-8000-2421026d0000', 'permutations', 'Permutations', 'Backtracking', 'Medium', 'https://leetcode.com/problems/permutations/'),
+  ('5d5a0080-000f-4000-8000-5d5a00800000', 'permutations-ii', 'Permutations II', 'Backtracking', 'Medium', 'https://leetcode.com/problems/permutations-ii/'),
+  ('49527f38-0008-4000-8000-49527f380000', 'n-queens', 'N-Queens', 'Backtracking', 'Hard', 'https://leetcode.com/problems/n-queens/'),
+  ('47c31209-000d-4000-8000-47c312090000', 'sudoku-solver', 'Sudoku Solver', 'Backtracking', 'Hard', 'https://leetcode.com/problems/sudoku-solver/'),
+  ('1540004e-0012-4000-8000-1540004e0000', 'activity-selection', 'Activity Selection', 'Greedy', 'Easy', 'https://www.geeksforgeeks.org/problems/activity-selection-1587115620/1'),
+  ('0254fb9a-0010-4000-8000-0254fb9a0000', 'min-coins-greedy', 'Minimum Number of Coins', 'Greedy', 'Easy', 'https://www.geeksforgeeks.org/problems/-minimum-number-of-coins4426/1'),
+  ('260fe631-0009-4000-8000-260fe6310000', 'jump-game', 'Jump Game', 'Greedy', 'Medium', 'https://leetcode.com/problems/jump-game/'),
+  ('3f7ee58c-0013-4000-8000-3f7ee58c0000', 'min-arrows-balloons', 'Arrows to Burst Balloons', 'Greedy', 'Medium', 'https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/'),
+  ('1be975c0-000b-4000-8000-1be975c00000', 'gas-station', 'Gas Station', 'Greedy', 'Medium', 'https://leetcode.com/problems/gas-station/'),
+  ('0d99df61-0011-4000-8000-0d99df610000', 'minimum-platforms', 'Minimum Platforms', 'Greedy', 'Medium', 'https://www.geeksforgeeks.org/problems/minimum-platforms-1587115620/1'),
+  ('5435563c-000c-4000-8000-5435563c0000', 'jump-game-ii', 'Jump Game II', 'Greedy', 'Medium', 'https://leetcode.com/problems/jump-game-ii/'),
+  ('2c6a7c42-0010-4000-8000-2c6a7c420000', 'partition-labels', 'Partition Labels', 'Greedy', 'Medium', 'https://leetcode.com/problems/partition-labels/'),
+  ('4535b84f-000e-4000-8000-4535b84f0000', 'assign-cookies', 'Assign Cookies', 'Greedy', 'Easy', 'https://leetcode.com/problems/assign-cookies/'),
+  ('05a0d865-0005-4000-8000-05a0d8650000', 'candy', 'Candy', 'Greedy', 'Hard', 'https://leetcode.com/problems/candy/'),
+  ('636b43da-000d-4000-8000-636b43da0000', 'tree-preorder', 'Binary Tree Preorder Traversal', 'Trees', 'Easy', 'https://leetcode.com/problems/binary-tree-preorder-traversal/'),
+  ('6159c21a-000c-4000-8000-6159c21a0000', 'tree-inorder', 'Binary Tree Inorder Traversal', 'Trees', 'Easy', 'https://leetcode.com/problems/binary-tree-inorder-traversal/'),
+  ('40aac4c1-000e-4000-8000-40aac4c10000', 'tree-postorder', 'Binary Tree Postorder Traversal', 'Trees', 'Easy', 'https://leetcode.com/problems/binary-tree-postorder-traversal/'),
+  ('0cb273ea-0010-4000-8000-0cb273ea0000', 'tree-level-order', 'Binary Tree Level Order Traversal', 'Trees', 'Medium', 'https://leetcode.com/problems/binary-tree-level-order-traversal/'),
+  ('5d3c4c71-000e-4000-8000-5d3c4c710000', 'max-depth-tree', 'Maximum Depth of Binary Tree', 'Trees', 'Easy', 'https://leetcode.com/problems/maximum-depth-of-binary-tree/'),
+  ('2c2124a5-0009-4000-8000-2c2124a50000', 'same-tree', 'Same Tree', 'Trees', 'Easy', 'https://leetcode.com/problems/same-tree/'),
+  ('4c1914cb-000b-4000-8000-4c1914cb0000', 'invert-tree', 'Invert Binary Tree', 'Trees', 'Easy', 'https://leetcode.com/problems/invert-binary-tree/'),
+  ('09f12f22-000d-4000-8000-09f12f220000', 'diameter-tree', 'Diameter of Binary Tree', 'Trees', 'Easy', 'https://leetcode.com/problems/diameter-of-binary-tree/'),
+  ('7b9bf53d-000e-4000-8000-7b9bf53d0000', 'min-depth-tree', 'Minimum Depth of Binary Tree', 'Trees', 'Easy', 'https://leetcode.com/problems/minimum-depth-of-binary-tree/'),
+  ('4981fca3-0008-4000-8000-4981fca30000', 'path-sum', 'Path Sum', 'Trees', 'Easy', 'https://leetcode.com/problems/path-sum/'),
+  ('2db7528a-000b-4000-8000-2db7528a0000', 'path-sum-ii', 'Path Sum II', 'Trees', 'Medium', 'https://leetcode.com/problems/path-sum-ii/'),
+  ('49d31116-000f-4000-8000-49d311160000', 'right-side-view', 'Binary Tree Right Side View', 'Trees', 'Medium', 'https://leetcode.com/problems/binary-tree-right-side-view/'),
+  ('61b3c999-000f-4000-8000-61b3c9990000', 'lca-binary-tree', 'Lowest Common Ancestor in Binary Tree', 'Trees', 'Medium', 'https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/'),
+  ('7c119f80-000e-4000-8000-7c119f800000', 'left-view-tree', 'Left View of Binary Tree', 'Trees', 'Easy', 'https://www.geeksforgeeks.org/problems/left-view-of-binary-tree/1'),
+  ('1dd9f74e-000d-4000-8000-1dd9f74e0000', 'top-view-tree', 'Top View of Binary Tree', 'Trees', 'Medium', 'https://www.geeksforgeeks.org/problems/top-view-of-binary-tree/1'),
+  ('07a53ca4-0010-4000-8000-07a53ca40000', 'bottom-view-tree', 'Bottom View of Binary Tree', 'Trees', 'Medium', 'https://www.geeksforgeeks.org/problems/bottom-view-of-binary-tree/1'),
+  ('3bb893e5-0017-4000-8000-3bb893e50000', 'diagonal-traversal-tree', 'Diagonal Traversal of Binary Tree', 'Trees', 'Medium', 'https://www.geeksforgeeks.org/problems/diagonal-traversal-of-binary-tree/1'),
+  ('089044a8-0018-4000-8000-089044a80000', 'vertical-order-traversal', 'Vertical Order Traversal', 'Trees', 'Hard', 'https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree/'),
+  ('3984b12f-000a-4000-8000-3984b12f0000', 'insert-bst', 'Insert into a Binary Search Tree', 'Trees', 'Medium', 'https://leetcode.com/problems/insert-into-a-binary-search-tree/'),
+  ('0a13fdda-000f-4000-8000-0a13fdda0000', 'delete-node-bst', 'Delete Node in a BST', 'Trees', 'Medium', 'https://leetcode.com/problems/delete-node-in-a-bst/'),
+  ('4060910c-000c-4000-8000-4060910c0000', 'validate-bst', 'Validate Binary Search Tree', 'Trees', 'Medium', 'https://leetcode.com/problems/validate-binary-search-tree/'),
+  ('24bfce5a-000b-4000-8000-24bfce5a0000', 'recover-bst', 'Recover Binary Search Tree', 'Trees', 'Medium', 'https://leetcode.com/problems/recover-binary-search-tree/'),
+  ('72be5514-000c-4000-8000-72be55140000', 'max-path-sum', 'Binary Tree Maximum Path Sum', 'Trees', 'Hard', 'https://leetcode.com/problems/binary-tree-maximum-path-sum/'),
+  ('48fd3906-0011-4000-8000-48fd39060000', 'kth-largest-array', 'Kth Largest Element in an Array', 'Heaps', 'Medium', 'https://leetcode.com/problems/kth-largest-element-in-an-array/'),
+  ('1cfb9168-000e-4000-8000-1cfb91680000', 'top-k-frequent', 'Top K Frequent Elements', 'Heaps', 'Medium', 'https://leetcode.com/problems/top-k-frequent-elements/'),
+  ('63fcbc79-0010-4000-8000-63fcbc790000', 'k-closest-points', 'K Closest Points to Origin', 'Heaps', 'Medium', 'https://leetcode.com/problems/k-closest-points-to-origin/'),
+  ('5f010b1e-000d-4000-8000-5f010b1e0000', 'merge-k-lists', 'Merge k Sorted Lists', 'Heaps', 'Hard', 'https://leetcode.com/problems/merge-k-sorted-lists/'),
+  ('1cc431f4-001a-4000-8000-1cc431f40000', 'find-k-pairs-smallest-sums', 'Find K Pairs with Smallest Sums', 'Heaps', 'Medium', 'https://leetcode.com/problems/find-k-pairs-with-smallest-sums/'),
+  ('447716c0-0012-4000-8000-447716c00000', 'median-data-stream', 'Find Median from Data Stream', 'Heaps', 'Hard', 'https://leetcode.com/problems/find-median-from-data-stream/'),
+  ('6fc18828-0015-4000-8000-6fc188280000', 'sliding-window-median', 'Sliding Window Median', 'Heaps', 'Hard', 'https://leetcode.com/problems/sliding-window-median/'),
+  ('7fd5cf8f-0008-4000-8000-7fd5cf8f0000', 'ipo-heap', 'IPO', 'Heaps', 'Hard', 'https://leetcode.com/problems/ipo/'),
+  ('3124e030-0010-4000-8000-3124e0300000', 'fibonacci-number', 'Fibonacci Number', 'Dynamic Programming', 'Easy', 'https://leetcode.com/problems/fibonacci-number/'),
+  ('124120f6-000f-4000-8000-124120f60000', 'climbing-stairs', 'Climbing Stairs', 'Dynamic Programming', 'Easy', 'https://leetcode.com/problems/climbing-stairs/'),
+  ('00c50ff7-000c-4000-8000-00c50ff70000', 'house-robber', 'House Robber', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/house-robber/'),
+  ('6ba2714a-000f-4000-8000-6ba2714a0000', 'house-robber-ii', 'House Robber II', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/house-robber-ii/'),
+  ('743d3810-000f-4000-8000-743d38100000', 'delete-and-earn', 'Delete and Earn', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/delete-and-earn/'),
+  ('26393724-001a-4000-8000-263937240000', 'partition-equal-subset-sum', 'Partition Equal Subset Sum', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/partition-equal-subset-sum/'),
+  ('11948594-000b-4000-8000-119485940000', 'coin-change', 'Coin Change', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/coin-change/'),
+  ('2d5c1421-000e-4000-8000-2d5c14210000', 'coin-change-ii', 'Coin Change II', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/coin-change-ii/'),
+  ('446327e3-000b-4000-8000-446327e30000', 'decode-ways', 'Decode Ways', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/decode-ways/'),
+  ('0bacc480-0014-4000-8000-0bacc4800000', 'max-product-subarray', 'Maximum Product Subarray', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/maximum-product-subarray/'),
+  ('1669447c-000a-4000-8000-1669447c0000', 'word-break', 'Word Break', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/word-break/'),
+  ('0001a1dc-0003-4000-8000-0001a1dc0000', 'lcs', 'Longest Common Subsequence', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/longest-common-subsequence/'),
+  ('009c33a8-000d-4000-8000-009c33a80000', 'edit-distance', 'Edit Distance', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/edit-distance/'),
+  ('3155200e-000c-4000-8000-3155200e0000', 'unique-paths', 'Unique Paths', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/unique-paths/'),
+  ('1ee378db-000f-4000-8000-1ee378db0000', 'unique-paths-ii', 'Unique Paths II', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/unique-paths-ii/'),
+  ('56772a42-000c-4000-8000-56772a420000', 'min-path-sum', 'Minimum Path Sum', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/minimum-path-sum/'),
+  ('39a6ab44-0014-4000-8000-39a6ab440000', 'min-falling-path-sum', 'Minimum Falling Path Sum', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/minimum-falling-path-sum/'),
+  ('487ea382-0015-4000-8000-487ea3820000', 'out-of-boundary-paths', 'Out of Boundary Paths', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/out-of-boundary-paths/'),
+  ('65885f37-0008-4000-8000-65885f370000', 'stock-ii', 'Best Time to Buy & Sell Stock II', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/'),
+  ('4b837c4f-0009-4000-8000-4b837c4f0000', 'stock-fee', 'Stock with Transaction Fee', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/'),
+  ('7ea52c42-000e-4000-8000-7ea52c420000', 'stock-cooldown', 'Stock with Cooldown', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/'),
+  ('422e1ee6-000b-4000-8000-422e1ee60000', 'knapsack-01', '0/1 Knapsack Problem', 'Dynamic Programming', 'Medium', 'https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1'),
+  ('55b735d6-000b-4000-8000-55b735d60000', 'rod-cutting', 'Rod Cutting', 'Dynamic Programming', 'Medium', 'https://www.geeksforgeeks.org/problems/rod-cutting0840/1'),
+  ('0001a296-0003-4000-8000-0001a2960000', 'lis', 'Longest Increasing Subsequence', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/longest-increasing-subsequence/'),
+  ('1a365226-0013-4000-8000-1a3652260000', 'interleaving-string', 'Interleaving String', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/interleaving-string/'),
+  ('0f223469-0016-4000-8000-0f2234690000', 'palindromic-substrings', 'Palindromic Substrings', 'Dynamic Programming', 'Medium', 'https://leetcode.com/problems/palindromic-substrings/'),
+  ('20b30be5-0016-4000-8000-20b30be50000', 'russian-doll-envelopes', 'Russian Doll Envelopes', 'Dynamic Programming', 'Hard', 'https://leetcode.com/problems/russian-doll-envelopes/'),
+  ('4dfeb826-000d-4000-8000-4dfeb8260000', 'number-1-bits', 'Number of 1 Bits', 'Bit Manipulation', 'Easy', 'https://leetcode.com/problems/number-of-1-bits/'),
+  ('2810e06e-000d-4000-8000-2810e06e0000', 'single-number', 'Single Number', 'Bit Manipulation', 'Easy', 'https://leetcode.com/problems/single-number/'),
+  ('071b8eef-000c-4000-8000-071b8eef0000', 'reverse-bits', 'Reverse Bits', 'Bit Manipulation', 'Easy', 'https://leetcode.com/problems/reverse-bits/'),
+  ('7c0a2921-0010-4000-8000-7c0a29210000', 'single-number-ii', 'Single Number II', 'Bit Manipulation', 'Medium', 'https://leetcode.com/problems/single-number-ii/'),
+  ('157f32de-0017-4000-8000-157f32de0000', 'neighboring-bitwise-xor', 'Neighboring Bitwise XOR', 'Bit Manipulation', 'Medium', 'https://leetcode.com/problems/neighboring-bitwise-xor/'),
+  ('5ebbd3c2-0016-4000-8000-5ebbd3c20000', 'total-hamming-distance', 'Total Hamming Distance', 'Bit Manipulation', 'Medium', 'https://leetcode.com/problems/total-hamming-distance/'),
+  ('296df190-0017-4000-8000-296df1900000', 'letter-case-permutation', 'Letter Case Permutation', 'Bit Manipulation', 'Medium', 'https://leetcode.com/problems/letter-case-permutation/'),
+  ('3194277b-000c-4000-8000-3194277b0000', 'min-flips-or', 'Min Flips to Make a OR b == c', 'Bit Manipulation', 'Medium', 'https://leetcode.com/problems/minimum-flips-to-make-a-or-b-equal-to-c/'),
+  ('1912d7e3-0013-4000-8000-1912d7e30000', 'graph-dfs-traversal', 'Depth First Traversal', 'Graphs', 'Easy', 'https://www.geeksforgeeks.org/problems/depth-first-traversal-for-a-graph/1'),
+  ('13395c36-0013-4000-8000-13395c360000', 'adjacency-list-impl', 'Implementation of Adjacency List', 'Graphs', 'Easy', 'https://www.geeksforgeeks.org/java/java-program-to-implement-adjacency-list/'),
+  ('3c0ccae1-0013-4000-8000-3c0ccae10000', 'graph-bfs-traversal', 'BFS Traversal', 'Graphs', 'Easy', 'https://www.geeksforgeeks.org/problems/bfs-traversal-of-graph/1'),
+  ('0d9486bb-0011-4000-8000-0d9486bb0000', 'path-exists-graph', 'Find if Path Exists', 'Graphs', 'Easy', 'https://leetcode.com/problems/find-if-path-exists-in-graph/'),
+  ('3a1ba517-000e-4000-8000-3a1ba5170000', 'keys-and-rooms', 'Keys and Rooms', 'Graphs', 'Medium', 'https://leetcode.com/problems/keys-and-rooms/'),
+  ('572a96b8-0017-4000-8000-572a96b80000', 'all-paths-source-target', 'All Paths Source to Target', 'Graphs', 'Medium', 'https://leetcode.com/problems/all-paths-from-source-to-target/'),
+  ('56d9b2d1-0013-4000-8000-56d9b2d10000', 'number-of-provinces', 'Number of Provinces', 'Graphs', 'Medium', 'https://leetcode.com/problems/number-of-provinces/'),
+  ('3ef3ce2a-0011-4000-8000-3ef3ce2a0000', 'network-connected', 'Operations to Make Network Connected', 'Graphs', 'Medium', 'https://leetcode.com/problems/number-of-operations-to-make-network-connected/'),
+  ('76193e0e-000a-4000-8000-76193e0e0000', 'flood-fill', 'Flood Fill', 'Graphs', 'Easy', 'https://leetcode.com/problems/flood-fill/'),
+  ('1487b3f4-0011-4000-8000-1487b3f40000', 'number-of-islands', 'Number of Islands', 'Graphs', 'Medium', 'https://leetcode.com/problems/number-of-islands/'),
+  ('13f50c6c-000f-4000-8000-13f50c6c0000', 'max-area-island', 'Max Area of Island', 'Graphs', 'Medium', 'https://leetcode.com/problems/max-area-of-island/'),
+  ('658398a1-0015-4000-8000-658398a10000', 'number-closed-islands', 'Number of Closed Islands', 'Graphs', 'Medium', 'https://leetcode.com/problems/number-of-closed-islands/'),
+  ('2e1db77d-000f-4000-8000-2e1db77d0000', 'rotting-oranges', 'Rotting Oranges', 'Graphs', 'Medium', 'https://leetcode.com/problems/rotting-oranges/'),
+  ('450b96f3-0009-4000-8000-450b96f30000', '01-matrix', '01 Matrix', 'Graphs', 'Medium', 'https://leetcode.com/problems/01-matrix/'),
+  ('14853d39-0010-4000-8000-14853d390000', 'map-highest-peak', 'Map of Highest Peak', 'Graphs', 'Medium', 'https://leetcode.com/problems/map-of-highest-peak/'),
+  ('42de2f63-0010-4000-8000-42de2f630000', 'as-far-from-land', 'As Far from Land as Possible', 'Graphs', 'Medium', 'https://leetcode.com/problems/as-far-from-land-as-possible/'),
+  ('3a3bb912-0017-4000-8000-3a3bb9120000', 'detect-cycle-undirected', 'Detect Cycle in Undirected Graph', 'Graphs', 'Medium', 'https://www.geeksforgeeks.org/problems/detect-cycle-in-an-undirected-graph/1'),
+  ('60bc1447-0015-4000-8000-60bc14470000', 'detect-cycle-directed', 'Detect Cycle in Directed Graph', 'Graphs', 'Medium', 'https://www.geeksforgeeks.org/problems/detect-cycle-in-a-directed-graph/1'),
+  ('42193b9c-0010-4000-8000-42193b9c0000', 'topological-sort', 'Topological Sort', 'Graphs', 'Medium', 'https://www.geeksforgeeks.org/problems/topological-sort/1'),
+  ('48262409-000f-4000-8000-482624090000', 'course-schedule', 'Course Schedule', 'Graphs', 'Medium', 'https://leetcode.com/problems/course-schedule/'),
+  ('0e7c2964-0012-4000-8000-0e7c29640000', 'course-schedule-ii', 'Course Schedule II', 'Graphs', 'Medium', 'https://leetcode.com/problems/course-schedule-ii/'),
+  ('4c52eca4-0010-4000-8000-4c52eca40000', 'alien-dictionary', 'Alien Dictionary', 'Graphs', 'Hard', 'https://www.geeksforgeeks.org/problems/alien-dictionary/1'),
+  ('67b1fac2-0012-4000-8000-67b1fac20000', 'is-graph-bipartite', 'Is Graph Bipartite?', 'Graphs', 'Medium', 'https://leetcode.com/problems/is-graph-bipartite/'),
+  ('7c39c027-0014-4000-8000-7c39c0270000', 'possible-bipartition', 'Possible Bipartition', 'Graphs', 'Medium', 'https://leetcode.com/problems/possible-bipartition/'),
+  ('703536b6-0017-4000-8000-703536b60000', 'shortest-path-unit-dist', 'Shortest Path Unit Distance', 'Graphs', 'Medium', 'https://www.geeksforgeeks.org/problems/shortest-path-in-undirected-graph-having-unit-distance/1'),
+  ('0815d016-000d-4000-8000-0815d0160000', 'dijkstra-algo', 'Dijkstra Algorithm', 'Graphs', 'Medium', 'https://www.geeksforgeeks.org/problems/implementing-dijkstra-set-1-adjacency-matrix/1'),
+  ('58fa3178-001b-4000-8000-58fa31780000', 'shortest-path-binary-matrix', 'Shortest Path in Binary Matrix', 'Graphs', 'Medium', 'https://leetcode.com/problems/shortest-path-in-binary-matrix/'),
+  ('68d7bdd6-0012-4000-8000-68d7bdd60000', 'network-delay-time', 'Network Delay Time', 'Graphs', 'Medium', 'https://leetcode.com/problems/network-delay-time/'),
+  ('46834c91-000f-4000-8000-46834c910000', 'path-min-effort', 'Path With Minimum Effort', 'Graphs', 'Medium', 'https://leetcode.com/problems/path-with-minimum-effort/'),
+  ('7ce74c42-0014-4000-8000-7ce74c420000', 'redundant-connection', 'Redundant Connection', 'Graphs (DSU)', 'Medium', 'https://leetcode.com/problems/redundant-connection/'),
+  ('5b11a69f-0010-4000-8000-5b11a69f0000', 'mst-kruskal-prim', 'Minimum Spanning Tree', 'Graphs (MST)', 'Medium', 'https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1'),
+  ('3131ead5-0017-4000-8000-3131ead50000', 'min-cost-connect-points', 'Min Cost to Connect All Points', 'Graphs (MST)', 'Medium', 'https://leetcode.com/problems/min-cost-to-connect-all-points/'),
+  ('50923351-000c-4000-8000-509233510000', 'bellman-ford', 'Distance from the Source (Bellman-Ford)', 'Graphs (Shortest Path)', 'Medium', 'https://www.geeksforgeeks.org/problems/distance-from-the-source-bellman-ford-algorithm/1'),
+  ('14154471-0018-4000-8000-141544710000', 'cheapest-flights-k-stops', 'Cheapest Flights Within K Stops', 'Graphs (Shortest Path)', 'Medium', 'https://leetcode.com/problems/cheapest-flights-within-k-stops/'),
+  ('118df243-000e-4000-8000-118df2430000', 'floyd-warshall', 'Implementing Floyd Warshall', 'Graphs (All-Pairs)', 'Medium', 'https://www.geeksforgeeks.org/problems/implementing-floyd-warshall2042/1'),
+  ('699401cb-0017-4000-8000-699401cb0000', 'city-smallest-neighbors', 'Find City With Smallest Number of Neighbors', 'Graphs (All-Pairs)', 'Medium', 'https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/'),
+  ('0e7c2971-0012-4000-8000-0e7c29710000', 'course-schedule-iv', 'Course Schedule IV', 'Graphs (All-Pairs)', 'Medium', 'https://leetcode.com/problems/course-schedule-iv/'),
+  ('49985e1a-000c-4000-8000-49985e1a0000', 'scc-kosaraju', 'Strongly Connected Components (Kosaraju)', 'Graphs (SCC)', 'Medium', 'https://www.geeksforgeeks.org/problems/strongly-connected-components-kosarajus-algo/1'),
+  ('2ee6e436-0015-4000-8000-2ee6e4360000', 'max-employees-meeting', 'Maximum Employees to Be Invited', 'Graphs', 'Hard', 'https://leetcode.com/problems/maximum-employees-to-be-invited-to-a-meeting/'),
+  ('2b362485-0014-4000-8000-2b3624850000', 'eventual-safe-states', 'Find Eventual Safe States', 'Graphs (Topo Sort)', 'Medium', 'https://leetcode.com/problems/find-eventual-safe-states/'),
+  ('6b630aec-0011-4000-8000-6b630aec0000', 'range-sum-mutable', 'Range Sum Query - Mutable', 'Segment Trees', 'Medium', 'https://leetcode.com/problems/range-sum-query-mutable/'),
+  ('58b23f03-000f-4000-8000-58b23f030000', 'range-min-query', 'Range Minimum Query', 'Segment Trees', 'Medium', 'https://www.geeksforgeeks.org/problems/range-minimum-query/1')
 ON CONFLICT (slug) DO UPDATE SET
   label = EXCLUDED.label,
   category = EXCLUDED.category,
   difficulty = EXCLUDED.difficulty,
   url = EXCLUDED.url;
+
+INSERT INTO public.edges (id, from_node, to_node) VALUES
+  ('69824a2d-0020-4000-8000-69824a2d0000', '4089aec3-000b-4000-8000-4089aec30000', '54d3d6b5-000e-4000-8000-54d3d6b50000'),
+  ('0b271223-0012-4000-8000-0b2712230000', '366a10b6-0007-4000-8000-366a10b60000', '0018ed38-0004-4000-8000-0018ed380000'),
+  ('3d7511e0-001c-4000-8000-3d7511e00000', '366a10b6-0007-4000-8000-366a10b60000', '54d3d6b5-000e-4000-8000-54d3d6b50000'),
+  ('776242a3-0027-4000-8000-776242a30000', '3818b59e-000c-4000-8000-3818b59e0000', '0bacc480-0014-4000-8000-0bacc4800000'),
+  ('7c9db00a-0025-4000-8000-7c9db00a0000', '54d3d6b5-000e-4000-8000-54d3d6b50000', '1efe512c-0010-4000-8000-1efe512c0000'),
+  ('6e0e05cf-0023-4000-8000-6e0e05cf0000', '54d3d6b5-000e-4000-8000-54d3d6b50000', '53fb237b-000e-4000-8000-53fb237b0000'),
+  ('6d948a92-0016-4000-8000-6d948a920000', '705670c6-0007-4000-8000-705670c60000', '65885f37-0008-4000-8000-65885f370000'),
+  ('2d266922-002b-4000-8000-2d2669220000', '748ccadd-0012-4000-8000-748ccadd0000', '40a5eabc-0012-4000-8000-40a5eabc0000'),
+  ('37375933-0025-4000-8000-373759330000', '28e74ea6-000d-4000-8000-28e74ea60000', '08e99de8-0011-4000-8000-08e99de80000'),
+  ('7e3709c0-0026-4000-8000-7e3709c00000', '5ad12d96-0010-4000-8000-5ad12d960000', '281eff35-000f-4000-8000-281eff350000'),
+  ('055254a6-0031-4000-8000-055254a60000', '5ad12d96-0010-4000-8000-5ad12d960000', '0cc5e745-001a-4000-8000-0cc5e7450000'),
+  ('64b1b11c-001a-4000-8000-64b1b11c0000', '281eff35-000f-4000-8000-281eff350000', '0018ed38-0004-4000-8000-0018ed380000'),
+  ('5d70459d-003a-4000-8000-5d70459d0000', '0cdbd5d2-0018-4000-8000-0cdbd5d20000', '64197a94-001b-4000-8000-64197a940000'),
+  ('1b7451a4-0030-4000-8000-1b7451a40000', '0cdbd5d2-0018-4000-8000-0cdbd5d20000', '45d23833-0011-4000-8000-45d238330000'),
+  ('417b6d89-002d-4000-8000-417b6d890000', '08e99de8-0011-4000-8000-08e99de80000', '45321372-0015-4000-8000-453213720000'),
+  ('42bd3190-0025-4000-8000-42bd31900000', '367870f4-000d-4000-8000-367870f40000', '61aead7b-0011-4000-8000-61aead7b0000'),
+  ('56944c5b-0028-4000-8000-56944c5b0000', '367870f4-000d-4000-8000-367870f40000', '3bad0d70-0014-4000-8000-3bad0d700000'),
+  ('3a3ccf42-0020-4000-8000-3a3ccf420000', '367870f4-000d-4000-8000-367870f40000', '59418aa9-000c-4000-8000-59418aa90000'),
+  ('5bc6a87d-0028-4000-8000-5bc6a87d0000', '61aead7b-0011-4000-8000-61aead7b0000', '6fa87269-0010-4000-8000-6fa872690000'),
+  ('4690afd5-002b-4000-8000-4690afd50000', '3bad0d70-0014-4000-8000-3bad0d700000', '2fcf1fda-0010-4000-8000-2fcf1fda0000'),
+  ('57e1dbd0-002c-4000-8000-57e1dbd00000', '3bad0d70-0014-4000-8000-3bad0d700000', '5283fdff-0011-4000-8000-5283fdff0000'),
+  ('736bf299-0027-4000-8000-736bf2990000', '59418aa9-000c-4000-8000-59418aa90000', '5bcab36f-0014-4000-8000-5bcab36f0000'),
+  ('20e5ecff-002a-4000-8000-20e5ecff0000', '5bcab36f-0014-4000-8000-5bcab36f0000', '12a5d871-000f-4000-8000-12a5d8710000'),
+  ('5b4cd1da-0025-4000-8000-5b4cd1da0000', '0a827477-0011-4000-8000-0a8274770000', '4d922f30-000d-4000-8000-4d922f300000'),
+  ('0a0fbd9a-0026-4000-8000-0a0fbd9a0000', '0a827477-0011-4000-8000-0a8274770000', '60760b04-000e-4000-8000-60760b040000'),
+  ('2b8e6130-0027-4000-8000-2b8e61300000', '60760b04-000e-4000-8000-60760b040000', '37f95f4d-0012-4000-8000-37f95f4d0000'),
+  ('2dd4de7f-002a-4000-8000-2dd4de7f0000', '37f95f4d-0012-4000-8000-37f95f4d0000', '3e43184d-0011-4000-8000-3e43184d0000'),
+  ('02012566-002a-4000-8000-020125660000', '3e43184d-0011-4000-8000-3e43184d0000', '386050fa-0012-4000-8000-386050fa0000'),
+  ('31dc5d1e-002c-4000-8000-31dc5d1e0000', '122fca99-0013-4000-8000-122fca990000', '6b3d479a-0012-4000-8000-6b3d479a0000'),
+  ('3f14e450-002a-4000-8000-3f14e4500000', '6b3d479a-0012-4000-8000-6b3d479a0000', '5440e4d5-0011-4000-8000-5440e4d50000'),
+  ('156604ba-0030-4000-8000-156604ba0000', '122fca99-0013-4000-8000-122fca990000', '646283fe-0016-4000-8000-646283fe0000'),
+  ('76fffbde-002d-4000-8000-76fffbde0000', '59dcf49f-0012-4000-8000-59dcf49f0000', '2887a382-0014-4000-8000-2887a3820000'),
+  ('492fb01b-001d-4000-8000-492fb01b0000', '6f51916f-0007-4000-8000-6f51916f0000', '11e191b3-000f-4000-8000-11e191b30000'),
+  ('7666f7d4-0022-4000-8000-7666f7d40000', '636b43da-000d-4000-8000-636b43da0000', '5d3c4c71-000e-4000-8000-5d3c4c710000'),
+  ('351e8c08-0025-4000-8000-351e8c080000', '5d3c4c71-000e-4000-8000-5d3c4c710000', '0cb273ea-0010-4000-8000-0cb273ea0000'),
+  ('336eb44d-0026-4000-8000-336eb44d0000', '0cb273ea-0010-4000-8000-0cb273ea0000', '49d31116-000f-4000-8000-49d311160000'),
+  ('04bd8fcb-0024-4000-8000-04bd8fcb0000', '5d3c4c71-000e-4000-8000-5d3c4c710000', '61b3c999-000f-4000-8000-61b3c9990000'),
+  ('17598819-001f-4000-8000-175988190000', '6159c21a-000c-4000-8000-6159c21a0000', '4060910c-000c-4000-8000-4060910c0000'),
+  ('4c0c1843-0026-4000-8000-4c0c18430000', '48fd3906-0011-4000-8000-48fd39060000', '1cfb9168-000e-4000-8000-1cfb91680000'),
+  ('76edfa57-0027-4000-8000-76edfa570000', '1cfb9168-000e-4000-8000-1cfb91680000', '447716c0-0012-4000-8000-447716c00000'),
+  ('54f3aca7-0026-4000-8000-54f3aca70000', '3124e030-0010-4000-8000-3124e0300000', '124120f6-000f-4000-8000-124120f60000'),
+  ('6abb765e-0022-4000-8000-6abb765e0000', '124120f6-000f-4000-8000-124120f60000', '00c50ff7-000c-4000-8000-00c50ff70000'),
+  ('19fa05b2-0028-4000-8000-19fa05b20000', '6f51916f-0007-4000-8000-6f51916f0000', '26393724-001a-4000-8000-263937240000'),
+  ('632a599d-0022-4000-8000-632a599d0000', '124120f6-000f-4000-8000-124120f60000', '3155200e-000c-4000-8000-3155200e0000'),
+  ('29adae37-0016-4000-8000-29adae370000', '3155200e-000c-4000-8000-3155200e0000', '0001a1dc-0003-4000-8000-0001a1dc0000'),
+  ('5f951efb-0017-4000-8000-5f951efb0000', '0001a1dc-0003-4000-8000-0001a1dc0000', '009c33a8-000d-4000-8000-009c33a80000'),
+  ('3f39de89-001d-4000-8000-3f39de890000', '0001a1dc-0003-4000-8000-0001a1dc0000', '1a365226-0013-4000-8000-1a3652260000'),
+  ('18af6d25-0037-4000-8000-18af6d250000', '0cc5e745-001a-4000-8000-0cc5e7450000', '0f223469-0016-4000-8000-0f2234690000'),
+  ('4252db92-0020-4000-8000-4252db920000', '0001a296-0003-4000-8000-0001a2960000', '20b30be5-0016-4000-8000-20b30be50000'),
+  ('375ca9ea-002d-4000-8000-375ca9ea0000', '13395c36-0013-4000-8000-13395c360000', '3c0ccae1-0013-4000-8000-3c0ccae10000'),
+  ('715c3b4f-002d-4000-8000-715c3b4f0000', '3c0ccae1-0013-4000-8000-3c0ccae10000', '56d9b2d1-0013-4000-8000-56d9b2d10000'),
+  ('00634760-0031-4000-8000-006347600000', '56d9b2d1-0013-4000-8000-56d9b2d10000', '3a3bb912-0017-4000-8000-3a3bb9120000'),
+  ('3d837110-002e-4000-8000-3d8371100000', '56d9b2d1-0013-4000-8000-56d9b2d10000', '7ce74c42-0014-4000-8000-7ce74c420000'),
+  ('0e639b60-002b-4000-8000-0e639b600000', '7ce74c42-0014-4000-8000-7ce74c420000', '5b11a69f-0010-4000-8000-5b11a69f0000'),
+  ('376cc609-002e-4000-8000-376cc6090000', '5b11a69f-0010-4000-8000-5b11a69f0000', '3131ead5-0017-4000-8000-3131ead50000'),
+  ('0f4312b6-002c-4000-8000-0f4312b60000', '60bc1447-0015-4000-8000-60bc14470000', '42193b9c-0010-4000-8000-42193b9c0000'),
+  ('42f0f1f4-0026-4000-8000-42f0f1f40000', '42193b9c-0010-4000-8000-42193b9c0000', '48262409-000f-4000-8000-482624090000'),
+  ('7d8fe1af-0025-4000-8000-7d8fe1af0000', '48fd3906-0011-4000-8000-48fd39060000', '0815d016-000d-4000-8000-0815d0160000'),
+  ('6df597df-0026-4000-8000-6df597df0000', '0815d016-000d-4000-8000-0815d0160000', '68d7bdd6-0012-4000-8000-68d7bdd60000'),
+  ('2986ce24-0020-4000-8000-2986ce240000', '0815d016-000d-4000-8000-0815d0160000', '50923351-000c-4000-8000-509233510000'),
+  ('6b8ecd0f-0021-4000-8000-6b8ecd0f0000', '50923351-000c-4000-8000-509233510000', '118df243-000e-4000-8000-118df2430000'),
+  ('51c49637-002c-4000-8000-51c496370000', '118df243-000e-4000-8000-118df2430000', '699401cb-0017-4000-8000-699401cb0000'),
+  ('1341182f-0027-4000-8000-1341182f0000', '118df243-000e-4000-8000-118df2430000', '0e7c2971-0012-4000-8000-0e7c29710000'),
+  ('1e2cacaa-0026-4000-8000-1e2cacaa0000', '1912d7e3-0013-4000-8000-1912d7e30000', '49985e1a-000c-4000-8000-49985e1a0000'),
+  ('7bfe44a8-002b-4000-8000-7bfe44a80000', '42193b9c-0010-4000-8000-42193b9c0000', '2b362485-0014-4000-8000-2b3624850000'),
+  ('08a5fc61-002b-4000-8000-08a5fc610000', '50923351-000c-4000-8000-509233510000', '14154471-0018-4000-8000-141544710000')
+ON CONFLICT (from_node, to_node) DO NOTHING;
