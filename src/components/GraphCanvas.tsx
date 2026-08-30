@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DSANode, DSAEdge, UserProgressMap, NodeStatus } from '@/lib/types';
 import { calculateNodeStatuses } from '@/lib/topoSort';
-import { ZoomIn, ZoomOut, Maximize2, Activity } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Activity, GitFork, Layers, Network } from 'lucide-react';
 
 interface GraphCanvasProps {
   nodes: DSANode[];
@@ -15,6 +15,8 @@ interface GraphCanvasProps {
   filterDifficulty?: string;
   searchQuery?: string;
 }
+
+export type LayoutMode = 'spacious' | 'hierarchical-ud' | 'hierarchical-lr';
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   nodes,
@@ -29,6 +31,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<any>(null);
   const [physicsEnabled, setPhysicsEnabled] = useState(true);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('spacious');
 
   // Calculate Phase 3 statuses (Locked, Ready, Completed)
   const statusMap = calculateNodeStatuses(nodes, edges, userProgress);
@@ -66,18 +69,18 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         const status: NodeStatus = info ? info.status : 'locked';
         const isSelected = selectedNodeId === node.id || selectedNodeId === node.slug;
 
-        let bgColor = '#334155'; // Slate Gray for Locked
+        let bgColor = '#1e293b'; // Slate 800 for Locked
         let borderColor = '#475569';
         let fontColor = '#e2e8f0';
         let iconPrefix = '🔒 ';
 
         if (status === 'completed') {
-          bgColor = '#059669'; // Emerald
+          bgColor = '#047857'; // Deep Emerald
           borderColor = '#10b981';
           fontColor = '#ffffff';
           iconPrefix = '✓ ';
         } else if (status === 'ready') {
-          bgColor = '#d97706'; // Amber
+          bgColor = '#b45309'; // Deep Amber
           borderColor = '#f59e0b';
           fontColor = '#ffffff';
           iconPrefix = '⚡ ';
@@ -87,7 +90,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           id: node.id,
           label: `${iconPrefix}${node.label}\n[${node.difficulty}]`,
           shape: 'box',
-          margin: { top: 12, right: 12, bottom: 12, left: 12 },
+          margin: { top: 10, right: 12, bottom: 10, left: 12 },
           borderWidth: isSelected ? 3 : 1.5,
           color: {
             background: bgColor,
@@ -103,12 +106,12 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           },
           font: {
             color: fontColor,
-            size: 13,
+            size: 12,
             face: 'Inter, system-ui, sans-serif',
           },
           shadow: isSelected
-            ? { enabled: true, color: 'rgba(255,255,255,0.4)', size: 10, x: 0, y: 0 }
-            : { enabled: true, color: 'rgba(0,0,0,0.3)', size: 5, x: 0, y: 2 },
+            ? { enabled: true, color: 'rgba(255,255,255,0.4)', size: 12, x: 0, y: 0 }
+            : { enabled: true, color: 'rgba(0,0,0,0.4)', size: 6, x: 0, y: 3 },
           shapeProperties: {
             borderRadius: 8,
           },
@@ -127,7 +130,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           },
         },
         color: {
-          color: '#64748b',
+          color: '#475569',
           highlight: '#38bdf8',
           hover: '#94a3b8',
         },
@@ -135,7 +138,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         smooth: {
           enabled: true,
           type: 'cubicBezier',
-          forceDirection: 'vertical' as const,
+          forceDirection: layoutMode === 'hierarchical-ud' ? 'vertical' : layoutMode === 'hierarchical-lr' ? 'horizontal' : 'none',
           roundness: 0.4,
         },
       }));
@@ -144,6 +147,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         nodes: new visNetwork.DataSet(visNodes as any),
         edges: new visNetwork.DataSet(visEdges as any),
       };
+
+      // Layout options based on selected mode
+      const isHierarchical = layoutMode.startsWith('hierarchical');
+      const direction = layoutMode === 'hierarchical-lr' ? 'LR' : 'UD';
 
       const options = {
         nodes: {
@@ -154,29 +161,37 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         },
         interaction: {
           hover: true,
-          tooltipDelay: 200,
+          tooltipDelay: 150,
           zoomView: true,
           dragView: true,
         },
         physics: {
-          enabled: physicsEnabled,
-          solver: 'forceAtlas2Based',
-          forceAtlas2Based: {
-            gravitationalConstant: -50,
-            centralGravity: 0.01,
-            springLength: 100,
-            springConstant: 0.08,
+          enabled: !isHierarchical && physicsEnabled,
+          solver: 'barnesHut',
+          barnesHut: {
+            gravitationalConstant: -4000, // Generous repulsion to prevent clutter
+            centralGravity: 0.1,
+            springLength: 180,            // Long spring length for spacious node gap
+            springConstant: 0.04,
             damping: 0.4,
+            avoidOverlap: 1.0,           // Strict overlap avoidance
           },
           stabilization: {
             enabled: true,
-            iterations: 150,
+            iterations: 200,
             updateInterval: 25,
           },
         },
         layout: {
           hierarchical: {
-            enabled: false,
+            enabled: isHierarchical,
+            direction: direction,
+            sortMethod: 'directed',
+            nodeSpacing: 180,
+            levelSeparation: 160,
+            blockShifting: true,
+            edgeMinimization: true,
+            parentCentralization: true,
           },
         },
       };
@@ -190,6 +205,11 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           onSelectNode(clickedNodeId);
         }
       });
+
+      // Auto fit on stabilization
+      networkInstance.once('stabilizationIterationsDone', () => {
+        networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+      });
     }
 
     initGraph();
@@ -199,7 +219,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         networkInstance.destroy();
       }
     };
-  }, [nodes, edges, userProgress, filterCategory, filterDifficulty, searchQuery, selectedNodeId]);
+  }, [nodes, edges, userProgress, filterCategory, filterDifficulty, searchQuery, selectedNodeId, layoutMode]);
 
   const handleZoomIn = () => {
     if (networkRef.current) {
@@ -237,43 +257,92 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       {/* Network Canvas Mount Point */}
       <div ref={containerRef} className="h-full w-full cursor-grab active:cursor-grabbing" />
 
-      {/* Floating Canvas Controls */}
+      {/* Floating Layout & View Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
-        <button
-          onClick={handleZoomIn}
-          title="Zoom In"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 text-slate-200 shadow-md backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
-        >
-          <ZoomIn className="h-4 w-4" />
-        </button>
+        
+        {/* Layout Mode Selector Dropdown */}
+        <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/90 p-1 shadow-lg backdrop-blur-md">
+          <button
+            onClick={() => setLayoutMode('spacious')}
+            title="Spacious Network Cluster"
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              layoutMode === 'spacious'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Network className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Spacious</span>
+          </button>
 
-        <button
-          onClick={handleZoomOut}
-          title="Zoom Out"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 text-slate-200 shadow-md backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
-        >
-          <ZoomOut className="h-4 w-4" />
-        </button>
+          <button
+            onClick={() => setLayoutMode('hierarchical-ud')}
+            title="Top-Down Dependency Tree"
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              layoutMode === 'hierarchical-ud'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <GitFork className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Top-Down Tree</span>
+          </button>
 
-        <button
-          onClick={handleFit}
-          title="Fit Network View"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 text-slate-200 shadow-md backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
-        >
-          <Maximize2 className="h-4 w-4" />
-        </button>
+          <button
+            onClick={() => setLayoutMode('hierarchical-lr')}
+            title="Left-Right Dependency Flow"
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              layoutMode === 'hierarchical-lr'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Left-Right</span>
+          </button>
+        </div>
 
-        <button
-          onClick={togglePhysics}
-          title={physicsEnabled ? "Pause Physics" : "Enable Physics"}
-          className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
-            physicsEnabled
-              ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-              : 'border-slate-700 bg-slate-900/90 text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Activity className="h-4 w-4" />
-        </button>
+        {/* Zoom & View Controls */}
+        <div className="flex flex-col gap-1.5 self-end">
+          <button
+            onClick={handleZoomIn}
+            title="Zoom In"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 text-slate-200 shadow-md backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={handleZoomOut}
+            title="Zoom Out"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 text-slate-200 shadow-md backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={handleFit}
+            title="Fit View"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/90 text-slate-200 shadow-md backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </button>
+
+          {!layoutMode.startsWith('hierarchical') && (
+            <button
+              onClick={togglePhysics}
+              title={physicsEnabled ? "Freeze Node Positions" : "Enable Physics"}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+                physicsEnabled
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                  : 'border-slate-700 bg-slate-900/90 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Activity className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
       </div>
 
       {/* Floating Graph Legend */}
@@ -291,7 +360,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           <span>Locked 🔒</span>
         </div>
         <div className="hidden border-l border-slate-800 pl-3 text-slate-500 sm:block">
-          Click any node to inspect & toggle
+          Use Category filter or Layout Mode buttons to declutter view
         </div>
       </div>
 
