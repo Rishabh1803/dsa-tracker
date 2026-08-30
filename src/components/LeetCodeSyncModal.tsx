@@ -9,7 +9,7 @@ interface LeetCodeSyncModalProps {
   isOpen: boolean;
   onClose: () => void;
   userKey?: string;
-  onProgressUpdated: (updatedProgress: UserProgressMap) => void;
+  onProgressUpdated: (updatedProgress: UserProgressMap, linkedHandle: string) => void;
 }
 
 export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
@@ -25,7 +25,7 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('dsa_tracker_leetcode_username');
+      const saved = localStorage.getItem('dsa_tracker_linked_leetcode_handle');
       if (saved) setUsername(saved);
     }
   }, []);
@@ -37,7 +37,9 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
     setError('');
     setResultMessage(null);
 
-    if (!username.trim()) {
+    const cleanHandle = username.trim().toLowerCase();
+
+    if (!cleanHandle) {
       setError('Please enter your LeetCode username.');
       return;
     }
@@ -46,13 +48,13 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
 
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('dsa_tracker_leetcode_username', username.trim());
+        localStorage.setItem('dsa_tracker_linked_leetcode_handle', cleanHandle);
       }
 
       const res = await fetch('/api/sync-leetcode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim() }),
+        body: JSON.stringify({ username: cleanHandle }),
       });
 
       const data = await res.json();
@@ -62,23 +64,16 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
       }
 
       const matchedNodeIds: string[] = data.matchedNodeIds || [];
+      let latestProgress: UserProgressMap = {};
 
-      if (matchedNodeIds.length === 0) {
-        setResultMessage(
-          `Fetched ${data.totalAcFetched} recent Accepted submissions for "${data.username}", but none matched the 205 curriculum nodes.`
-        );
-      } else {
-        // Batch mark all matched nodes as Completed in DB / Local Storage
-        let latestProgress: UserProgressMap = {};
+      if (matchedNodeIds.length > 0) {
         for (const nodeId of matchedNodeIds) {
           latestProgress = await toggleNodeCompletionInDb(nodeId, false, userKey);
         }
-
-        onProgressUpdated(latestProgress);
-        setResultMessage(
-          `Successfully verified and marked ${matchedNodeIds.length} accepted problem(s) as Completed 🟢!`
-        );
       }
+
+      onProgressUpdated(latestProgress, cleanHandle);
+      onClose(); // Automatically close modal after successful account link & sync!
     } catch (err: any) {
       setError(err.message || 'Error syncing with LeetCode API.');
     } finally {
@@ -97,8 +92,8 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
               <Code2 className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Sync LeetCode Progress</h3>
-              <p className="text-xs text-slate-400">Auto-verify & mark "Accepted" submissions</p>
+              <h3 className="text-base font-bold text-white">Link LeetCode Account</h3>
+              <p className="text-xs text-slate-400">Connect once for 1-click auto-sync</p>
             </div>
           </div>
           <button
@@ -112,7 +107,7 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSync} className="mt-4 space-y-4">
           <div>
-            <label className="text-xs font-semibold text-slate-300">LeetCode Username</label>
+            <label className="text-xs font-semibold text-slate-300">LeetCode Username Handle</label>
             <div className="relative mt-1.5">
               <input
                 type="text"
@@ -120,11 +115,11 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="e.g. rishabh1803"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:border-amber-500 focus:outline-none"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:border-amber-500 focus:outline-none font-semibold"
               />
             </div>
             <p className="mt-1 text-[11px] text-slate-500">
-              Must be your public LeetCode handle. We fetch verified "Accepted" problem submissions via LeetCode's public GraphQL API.
+              Once linked, your LeetCode handle is saved to your account. Clicking "Sync" will automatically verify your Accepted submissions without typing your handle again.
             </p>
           </div>
 
@@ -148,7 +143,7 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>{loading ? 'Fetching LeetCode Submissions...' : 'Sync Progress Now'}</span>
+            <span>{loading ? 'Linking & Verifying...' : 'Link & Sync Account'}</span>
           </button>
         </form>
 

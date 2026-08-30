@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Network, ListOrdered, UploadCloud, ShieldCheck, Sparkles, LogOut, LogIn, Code2 } from 'lucide-react';
+import { Network, ListOrdered, UploadCloud, ShieldCheck, Sparkles, LogOut, LogIn, Code2, RefreshCw } from 'lucide-react';
 import { GraphStats } from '@/lib/types';
 
 interface NavbarProps {
@@ -9,8 +9,11 @@ interface NavbarProps {
   activeTab: 'graph' | 'plan' | 'admin';
   setActiveTab: (tab: 'graph' | 'plan' | 'admin') => void;
   userEmail?: string | null;
+  leetcodeHandle?: string | null;
+  isSyncingLeetCode?: boolean;
   onOpenAuth?: () => void;
   onOpenLeetCodeSync?: () => void;
+  onQuickLeetCodeSync?: () => void;
   onSignOut?: () => void;
 }
 
@@ -19,8 +22,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   userEmail,
+  leetcodeHandle,
+  isSyncingLeetCode = false,
   onOpenAuth,
   onOpenLeetCodeSync,
+  onQuickLeetCodeSync,
   onSignOut,
 }) => {
   return (
@@ -92,16 +98,28 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Action Controls & Auth Status Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
           
-          {/* Sync LeetCode Button */}
-          {onOpenLeetCodeSync && (
+          {/* Linked LeetCode Account One-Click Sync Button */}
+          {leetcodeHandle ? (
             <button
-              onClick={onOpenLeetCodeSync}
-              title="Sync verified LeetCode Accepted submissions"
-              className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition"
+              onClick={onQuickLeetCodeSync}
+              disabled={isSyncingLeetCode}
+              title={`Sync verified submissions for ${leetcodeHandle}`}
+              className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition disabled:opacity-50"
             >
-              <Code2 className="h-4 w-4" />
-              <span className="hidden md:inline">Sync LeetCode</span>
+              <RefreshCw className={`h-3.5 w-3.5 ${isSyncingLeetCode ? 'animate-spin' : ''}`} />
+              <span>{isSyncingLeetCode ? 'Syncing...' : `Sync (${leetcodeHandle})`}</span>
             </button>
+          ) : (
+            onOpenLeetCodeSync && (
+              <button
+                onClick={onOpenLeetCodeSync}
+                title="Link LeetCode Account for 1-Click Sync"
+                className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition"
+              >
+                <Code2 className="h-4 w-4" />
+                <span className="hidden md:inline">Link LeetCode</span>
+              </button>
+            )
           )}
 
           {userEmail ? (

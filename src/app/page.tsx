@@ -40,12 +40,15 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLeetCodeModal, setShowLeetCodeModal] = useState(false);
+  const [leetcodeHandle, setLeetcodeHandle] = useState<string | null>(null);
+  const [isSyncingLeetCode, setIsSyncingLeetCode] = useState(false);
+
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Initial Load: Fetch nodes, edges, active session & user progress
+  // Initial Load: Fetch nodes, edges, active session, user progress & linked LeetCode handle
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -88,9 +91,21 @@ export default function Home() {
         }
       }
 
+      // Restore linked LeetCode handle
+      let savedHandle: string | null = null;
+      if (typeof window !== 'undefined') {
+        savedHandle = localStorage.getItem('dsa_tracker_linked_leetcode_handle');
+        setLeetcodeHandle(savedHandle);
+      }
+
       const p = await fetchUserProgress(activeUserKey);
       setUserProgress(p);
       setLoading(false);
+
+      // Auto-sync LeetCode in background on initial load if account is linked
+      if (savedHandle) {
+        handleQuickLeetCodeSync(savedHandle, activeUserKey);
+      }
     }
 
     loadData();
@@ -113,6 +128,41 @@ export default function Home() {
     const userKey = user?.id || user?.email;
     const updatedProgress = await toggleNodeCompletionInDb(nodeId, currentlyCompleted, userKey);
     setUserProgress(updatedProgress);
+  };
+
+  // Quick 1-Click LeetCode Sync handler
+  const handleQuickLeetCodeSync = async (handleToSync?: string, overrideUserKey?: string) => {
+    const handle = handleToSync || leetcodeHandle;
+    if (!handle) {
+      setShowLeetCodeModal(true);
+      return;
+    }
+
+    setIsSyncingLeetCode(true);
+    const userKey = overrideUserKey || user?.id || user?.email;
+
+    try {
+      const res = await fetch('/api/sync-leetcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: handle }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && Array.isArray(data.matchedNodeIds)) {
+        let updatedProgress: UserProgressMap = {};
+        for (const nodeId of data.matchedNodeIds) {
+          updatedProgress = await toggleNodeCompletionInDb(nodeId, false, userKey);
+        }
+        if (data.matchedNodeIds.length > 0) {
+          setUserProgress(updatedProgress);
+        }
+      }
+    } catch (e) {
+      console.warn('Quick LeetCode sync background warning:', e);
+    } finally {
+      setIsSyncingLeetCode(false);
+    }
   };
 
   // Auth Handler: Supports both Supabase Auth & Local Demo Auth
@@ -194,8 +244,11 @@ export default function Home() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userEmail={user?.email}
+        leetcodeHandle={leetcodeHandle}
+        isSyncingLeetCode={isSyncingLeetCode}
         onOpenAuth={() => setShowAuthModal(true)}
         onOpenLeetCodeSync={() => setShowLeetCodeModal(true)}
+        onQuickLeetCodeSync={() => handleQuickLeetCodeSync()}
         onSignOut={handleSignOut}
       />
 
@@ -295,8 +348,11 @@ export default function Home() {
         isOpen={showLeetCodeModal}
         onClose={() => setShowLeetCodeModal(false)}
         userKey={user?.id || user?.email}
-        onProgressUpdated={updatedProgress => {
-          setUserProgress(updatedProgress);
+        onProgressUpdated={(updatedProgress, linkedHandle) => {
+          setLeetcodeHandle(linkedHandle);
+          if (Object.keys(updatedProgress).length > 0) {
+            setUserProgress(updatedProgress);
+          }
         }}
       />
 
