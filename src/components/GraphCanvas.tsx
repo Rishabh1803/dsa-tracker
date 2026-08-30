@@ -38,7 +38,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   // Calculate Phase 3 statuses (Locked, Ready, Completed)
   const statusMap = calculateNodeStatuses(nodes, edges, userProgress);
 
-  // 1. Strict, Precise Filtering (Fixes Filter Issue)
+  // 1. Strict, Precise Filtering
   const filteredNodes = nodes.filter(node => {
     if (filterCategory !== 'All' && node.category !== filterCategory) return false;
     if (filterDifficulty !== 'All' && node.difficulty !== filterDifficulty) return false;
@@ -88,7 +88,6 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         const status: NodeStatus = info ? info.status : 'locked';
         const isSelected = selectedNodeId === node.id || selectedNodeId === node.slug;
 
-        // High-Legibility Styling (Fixes Legibility Issue)
         let bgColor = '#1e293b'; // Slate 800
         let borderColor = '#64748b'; // Slate 500
         let fontColor = '#f8fafc';
@@ -155,7 +154,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         return baseNode;
       });
 
-      // High-Visibility Sky Blue Edges
+      // Clean, Direct Continuous Connection Arrows
       const visEdges = filteredEdges.map(edge => ({
         id: edge.id || `${edge.from}->${edge.to}`,
         from: edge.from,
@@ -163,22 +162,21 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         arrows: {
           to: {
             enabled: true,
-            scaleFactor: 1.3,
+            scaleFactor: 1.2,
             type: 'arrow',
           },
         },
         color: {
           color: '#38bdf8',       // Vibrant Sky Blue
-          highlight: '#34d399',
+          highlight: '#34d399', // Glowing Emerald on hover/select
           hover: '#60a5fa',
           opacity: 0.9,
         },
-        width: 3, // Crisp thick lines
+        width: 2.5,
         smooth: {
           enabled: true,
-          type: 'cubicBezier',
-          forceDirection: 'none',
-          roundness: 0.35,
+          type: 'continuous', // Smooth continuous direct lines pointing straight to target box
+          roundness: 0.2,
         },
       }));
 
@@ -187,7 +185,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         edges: new visNetwork.DataSet(visEdges as any),
       };
 
-      // Powerful Anti-Overlap Physics Settings (Fixes Overlap Issue)
+      // Balanced Anti-Overlap Physics with Firm Edge Springs
       const options = {
         nodes: {
           shadow: true,
@@ -197,6 +195,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         },
         interaction: {
           hover: true,
+          hoverConnectedEdges: true, // Automatically highlight incoming/outgoing prerequisite arrows on hover!
+          selectConnectedEdges: true,
           tooltipDelay: 100,
           zoomView: true,
           dragView: true,
@@ -205,12 +205,12 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           enabled: layoutMode !== 'module-grid' && physicsEnabled,
           solver: 'barnesHut',
           barnesHut: {
-            gravitationalConstant: -22000, // Massive repulsion pushing node boxes far apart
-            centralGravity: 0.008,
-            springLength: 220,             // Spacious gap between nodes
-            springConstant: 0.02,
-            damping: 0.6,
-            avoidOverlap: 1.0,            // Strict zero overlap
+            gravitationalConstant: -12000, // Balanced repulsion
+            centralGravity: 0.01,
+            springLength: 170,             // Clean, comfortable distance between connected nodes
+            springConstant: 0.06,          // Firm spring tension keeps connection arrows straight and clean!
+            damping: 0.5,
+            avoidOverlap: 1.0,
           },
           stabilization: {
             enabled: true,
@@ -230,7 +230,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }
       });
 
-      // Auto fit canvas to comfortable zoom level
+      // Auto fit canvas on initial stabilization
       networkInstance.once('stabilizationIterationsDone', () => {
         networkInstance.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
       });
