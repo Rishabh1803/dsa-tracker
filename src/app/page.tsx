@@ -189,7 +189,11 @@ export default function Home() {
         if (authMode === 'signup') {
           const { data, error } = await supabase.auth.signUp({ email, password });
           if (error) {
-            setAuthError(error.message);
+            if (error.message.toLowerCase().includes('rate limit')) {
+              setAuthError('Supabase Email Rate Limit Exceeded. Please uncheck "Confirm Email" in your Supabase Dashboard ➔ Auth ➔ Providers ➔ Email for instant signup.');
+            } else {
+              setAuthError(error.message);
+            }
             return;
           }
           if (data.user) {
@@ -201,7 +205,7 @@ export default function Home() {
               setUserProgress(p);
               setShowAuthModal(false);
             } else {
-              setAuthError('Account created! Please check your email to confirm your account before logging in.');
+              setAuthError('Account created! Please check your email to confirm your account or disable email confirmation in Supabase settings.');
             }
             return;
           }
