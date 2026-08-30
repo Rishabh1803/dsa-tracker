@@ -39,6 +39,11 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
 
     const cleanHandle = username.trim().toLowerCase();
 
+    if (!userKey) {
+      setError('Please log in to your account first before linking or syncing LeetCode.');
+      return;
+    }
+
     if (!cleanHandle) {
       setError('Please enter your LeetCode username.');
       return;

@@ -98,44 +98,46 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Action Controls & Auth Status Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
           
-          {/* Linked LeetCode Account One-Click Sync Button */}
-          {leetcodeHandle ? (
-            <button
-              onClick={onQuickLeetCodeSync}
-              disabled={isSyncingLeetCode}
-              title={`Sync verified submissions for ${leetcodeHandle}`}
-              className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isSyncingLeetCode ? 'animate-spin' : ''}`} />
-              <span>{isSyncingLeetCode ? 'Syncing...' : `Sync (${leetcodeHandle})`}</span>
-            </button>
-          ) : (
-            onOpenLeetCodeSync && (
-              <button
-                onClick={onOpenLeetCodeSync}
-                title="Link LeetCode Account for 1-Click Sync"
-                className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition"
-              >
-                <Code2 className="h-4 w-4" />
-                <span className="hidden md:inline">Link LeetCode</span>
-              </button>
-            )
-          )}
-
+          {/* LeetCode Sync Button: Only rendered when user is logged in! */}
           {userEmail ? (
-            <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span className="max-w-[120px] truncate text-white font-semibold">Logged in as {userEmail}</span>
-              {onSignOut && (
+            <>
+              {leetcodeHandle ? (
                 <button
-                  onClick={onSignOut}
-                  title="Sign Out"
-                  className="ml-1 rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-rose-400 transition"
+                  onClick={onQuickLeetCodeSync}
+                  disabled={isSyncingLeetCode}
+                  title={`Sync verified submissions for ${leetcodeHandle}`}
+                  className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition disabled:opacity-50"
                 >
-                  <LogOut className="h-3.5 w-3.5" />
+                  <RefreshCw className={`h-3.5 w-3.5 ${isSyncingLeetCode ? 'animate-spin' : ''}`} />
+                  <span>{isSyncingLeetCode ? 'Syncing...' : `Sync (${leetcodeHandle})`}</span>
                 </button>
+              ) : (
+                onOpenLeetCodeSync && (
+                  <button
+                    onClick={onOpenLeetCodeSync}
+                    title="Link LeetCode Account for 1-Click Sync"
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/20 shadow-md transition"
+                  >
+                    <Code2 className="h-4 w-4" />
+                    <span className="hidden md:inline">Link LeetCode</span>
+                  </button>
+                )
               )}
-            </div>
+
+              <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <span className="max-w-[120px] truncate text-white font-semibold">Logged in as {userEmail}</span>
+                {onSignOut && (
+                  <button
+                    onClick={onSignOut}
+                    title="Sign Out"
+                    className="ml-1 rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-rose-400 transition"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </>
           ) : (
             <button
               onClick={onOpenAuth}
@@ -145,6 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Log In / Sign Up</span>
             </button>
           )}
+
         </div>
 
       </div>
