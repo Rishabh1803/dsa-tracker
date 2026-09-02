@@ -124,7 +124,7 @@ export const LeetCodeSyncModal: React.FC<LeetCodeSyncModalProps> = ({
               />
             </div>
             <p className="mt-1 text-[11px] text-slate-500">
-              Once linked, your LeetCode handle is saved to your account. Clicking "Sync" will automatically verify your Accepted submissions without typing your handle again.
+              Once linked, your LeetCode handle is saved to your account. Clicking &quot;Sync&quot; will automatically verify your Accepted submissions without typing your handle again.
             </p>
           </div>
 

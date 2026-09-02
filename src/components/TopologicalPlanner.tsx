@@ -79,7 +79,7 @@ export const TopologicalPlanner: React.FC<TopologicalPlannerProps> = ({
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-white sm:text-xl">Topological Study Path Generator</h2>
             <span className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-400">
-              <Sparkles className="h-3 w-3" /> Kahn's Algorithm
+              <Sparkles className="h-3 w-3" /> Kahn&apos;s Algorithm
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-400">

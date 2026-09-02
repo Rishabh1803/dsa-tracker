@@ -464,7 +464,7 @@ export default function Home() {
             <div className="mt-4 text-center text-xs text-slate-400">
               {authMode === 'login' ? (
                 <span>
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <button
                     onClick={() => {
                       setAuthError('');
