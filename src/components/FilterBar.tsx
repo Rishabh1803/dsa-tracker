@@ -73,7 +73,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <option value="All">All Statuses</option>
             <option value="completed">🟢 Completed / Done</option>
             <option value="ready">🟡 Unlocked / Ready to Solve</option>
-            <option value="locked">🔒 Locked / Pending Prereqs</option>
+            <option value="locked">&#128274; Locked / Pending</option>
           </select>
         </div>
       </div>
