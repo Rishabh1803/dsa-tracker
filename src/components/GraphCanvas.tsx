@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DSANode, DSAEdge, UserProgressMap, NodeStatus } from '@/lib/types';
 import { calculateNodeStatuses } from '@/lib/topoSort';
-import { ZoomIn, ZoomOut, Maximize2, Activity, Grid, Network, ArrowRight } from 'lucide-react';
-import { Lock, ArrowRight } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Activity, Grid, Network, ArrowRight, Lock } from 'lucide-react';
+
 interface GraphCanvasProps {
   nodes: DSANode[];
   edges: DSAEdge[];

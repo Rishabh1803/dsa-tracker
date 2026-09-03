@@ -4,7 +4,6 @@ import React from 'react';
 import { DSANode, DSAEdge, UserProgressMap } from '@/lib/types';
 import { calculateNodeStatuses } from '@/lib/topoSort';
 import { X, ExternalLink, CheckCircle2, Lock, Play, ChevronRight } from 'lucide-react';
-import { Lock } from "lucide-react";
 
 interface NodeInspectorProps {
   nodeIdOrSlug: string | null;
