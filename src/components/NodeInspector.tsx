@@ -4,6 +4,7 @@ import React from 'react';
 import { DSANode, DSAEdge, UserProgressMap } from '@/lib/types';
 import { calculateNodeStatuses } from '@/lib/topoSort';
 import { X, ExternalLink, CheckCircle2, Lock, Play, ChevronRight } from 'lucide-react';
+import { Lock } from "lucide-react";
 
 interface NodeInspectorProps {
   nodeIdOrSlug: string | null;
@@ -104,7 +105,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
 
             {isLocked && (
               <span className="flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-bold text-slate-400">
-                <Lock className="h-3.5 w-3.5" /> Prerequisites Unmet 🔒
+                <Lock className="h-3.5 w-3.5" /> Prerequisites Unmet <Lock className="w-4 h-4 inline-block ml-1"/>
               </span>
             )}
           </div>
@@ -129,7 +130,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
               <div className="flex flex-col gap-2">
                 <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
                   <Lock className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
-                  <span>This topic is <strong>Locked 🔒</strong>. You must complete all required prerequisite topics below before unlocking this problem!</span>
+                  <span>This topic is <strong>Locked <Lock className="w-4 h-4 inline-block ml-1"/></strong>. You must complete all required prerequisite topics below before unlocking this problem!</span>
                 </div>
                 <button
                   disabled

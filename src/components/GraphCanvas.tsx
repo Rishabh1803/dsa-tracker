@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DSANode, DSAEdge, UserProgressMap, NodeStatus } from '@/lib/types';
 import { calculateNodeStatuses } from '@/lib/topoSort';
 import { ZoomIn, ZoomOut, Maximize2, Activity, Grid, Network, ArrowRight } from 'lucide-react';
-
+import { Lock, ArrowRight } from "lucide-react";
 interface GraphCanvasProps {
   nodes: DSANode[];
   edges: DSAEdge[];
@@ -91,7 +91,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         let bgColor = '#1e293b'; // Slate 800
         let borderColor = '#64748b'; // Slate 500
         let fontColor = '#f8fafc';
-        let iconPrefix = '🔒 ';
+        let iconPrefix = '[Locked] ';
 
         if (status === 'completed') {
           bgColor = '#047857'; // Deep Emerald
@@ -368,10 +368,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         </div>
         <div className="flex items-center gap-1.5 text-slate-400">
           <span className="h-3 w-3 rounded-md bg-slate-600 shadow-sm" />
-          <span>Locked 🔒</span>
+          <span>Locked <Lock className="w-4 h-4 ml-1 inline-block text-gray-400"/></span>
         </div>
         <div className="flex items-center gap-1.5 text-sky-400 border-l border-slate-800 pl-3">
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="w-4 h-4 text-blue-400 inline-block mr-1"/> 
           <span>Prerequisite Arrow</span>
         </div>
       </div>
